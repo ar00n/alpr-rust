@@ -1,12 +1,12 @@
 mod auth;
-mod db;             // <-- New
+mod db;
 mod handlers;
 mod lpr;
 mod models;
 mod openapi;
-mod router;         // <-- New
+mod router;
 mod rtsp;
-mod shutdown;       // <-- New
+mod shutdown;
 mod state;
 
 use axum::body::Bytes;
@@ -21,6 +21,7 @@ use crate::{
     state::AppState,
 };
 
+// run build trick
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
