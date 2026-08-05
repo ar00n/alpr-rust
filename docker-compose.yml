@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    # ports:
+    #   - "3000:3000"
+    expose:
+      - "3000"
+    volumes:
+      # Persist the SQLite database outside the container
+      - backend_data:/app/data
+      - backend_snapshots:/app/snapshots
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
+  backend_snapshots:

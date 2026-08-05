@@ -1,0 +1,7 @@
+target/
+outputs/
+assets/
+anpr.db
+ed_private.pem
+ed_public.pem
+snapshots/

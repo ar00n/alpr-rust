@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT \n            id, \n            plate, \n            confidence, \n            snapshot_image, \n            timestamp as \"timestamp: DateTime<Utc>\", \n            was_allowed \n        FROM plate_reads \n        WHERE (?1 IS NULL OR plate LIKE ?1)\n        ORDER BY id DESC \n        LIMIT ?2 OFFSET ?3\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "plate",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "plate"
+          }
+        }
+      },
+      {
+        "name": "confidence",
+        "ordinal": 2,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "confidence"
+          }
+        }
+      },
+      {
+        "name": "snapshot_image",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "snapshot_image"
+          }
+        }
+      },
+      {
+        "name": "timestamp: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "timestamp"
+          }
+        }
+      },
+      {
+        "name": "was_allowed",
+        "ordinal": 5,
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "was_allowed"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "f3d46518cdff7f8facee6ef91cece1c8f239635459b0f165105fcaf745246118"
+}

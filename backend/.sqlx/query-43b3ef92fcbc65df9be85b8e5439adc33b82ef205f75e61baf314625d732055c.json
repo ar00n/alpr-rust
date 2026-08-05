@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM allow_list WHERE plate = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "43b3ef92fcbc65df9be85b8e5439adc33b82ef205f75e61baf314625d732055c"
+}

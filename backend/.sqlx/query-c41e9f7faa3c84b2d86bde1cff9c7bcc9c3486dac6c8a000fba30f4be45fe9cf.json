@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT 1 FROM allow_list \n        WHERE plate = ? AND (expiry_date IS NULL OR expiry_date > CURRENT_TIMESTAMP)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "1",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c41e9f7faa3c84b2d86bde1cff9c7bcc9c3486dac6c8a000fba30f4be45fe9cf"
+}

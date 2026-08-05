@@ -1,0 +1,86 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO plate_reads (plate, confidence, snapshot_image, was_allowed)\n        WITH input(plate, confidence, snapshot_image) AS (\n            VALUES (?, ?, ?)\n        )\n        SELECT \n            plate, \n            confidence, \n            snapshot_image,\n            EXISTS (\n                SELECT 1 \n                FROM allow_list \n                WHERE allow_list.plate = input.plate \n                AND (expiry_date IS NULL OR expiry_date > CURRENT_TIMESTAMP)\n            ) AS was_allowed\n        FROM input\n        RETURNING id, plate, confidence, snapshot_image, timestamp AS \"timestamp: DateTime<Utc>\", was_allowed;\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "plate",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "plate"
+          }
+        }
+      },
+      {
+        "name": "confidence",
+        "ordinal": 2,
+        "type_info": "Float",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "confidence"
+          }
+        }
+      },
+      {
+        "name": "snapshot_image",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "snapshot_image"
+          }
+        }
+      },
+      {
+        "name": "timestamp: DateTime<Utc>",
+        "ordinal": 4,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "timestamp"
+          }
+        }
+      },
+      {
+        "name": "was_allowed",
+        "ordinal": 5,
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "was_allowed"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "75d0e6dff64e6ae97b0b4d234459d35c7bc0fbab0de6a593761d1c1ba44c43e3"
+}

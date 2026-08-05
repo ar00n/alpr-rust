@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        DELETE FROM plate_reads \n        WHERE timestamp < datetime('now', ?)\n        RETURNING snapshot_image\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "snapshot_image",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "plate_reads",
+            "name": "snapshot_image"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "aa969c5a850c4dfe23e6141f4e2de129258900516c5000e51edee6878252ca25"
+}

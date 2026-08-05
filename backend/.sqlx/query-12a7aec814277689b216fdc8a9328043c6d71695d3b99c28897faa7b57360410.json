@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT COUNT(*) \n        FROM plate_reads \n        WHERE (?1 IS NULL OR plate LIKE ?1)\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "COUNT(*)",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "12a7aec814277689b216fdc8a9328043c6d71695d3b99c28897faa7b57360410"
+}

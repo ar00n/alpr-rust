@@ -1,0 +1,37 @@
+[package]
+name = "alpr_backend"
+version = "0.1.0"
+edition = "2021"
+homepage = "https://github.com/ar00n"
+
+[dependencies]
+ort = { version = "2.0.0-rc.12", features = ["cuda", "ndarray", "openvino"] }          # ONNX Runtime bindings
+image = "0.25"       # Image loading and preprocessing
+ndarray = "0.17"     # N-dimensional array processing
+axum = { version = "0.8.9", features = ["ws"] }
+tokio = { version = "1.53.1", features = ["full"] }
+sqlx = { version = "0.9.0", features = ["chrono", "migrate", "runtime-tokio", "sqlite"] }
+moka = { version = "0.12.15", features = ["future", "sync"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+tower-http = { version = "0.7.0", features = ["cors"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "fmt"] }
+bcrypt = "0.19.3"
+axum-extra = { version = "0.12.6", features = ["typed-header"] }
+utoipa = { version = "5.5.0", features = ["chrono"] }
+utoipa-axum = "0.2.0"
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+jsonwebtoken = { version = "11.0.0", features = ["rust_crypto"] }
+chrono = { version = "0.4.45", features = ["serde"] }
+dotenv = "0.15.0"
+ed25519-dalek = { version = "3.0.0", features = ["pem", "pkcs8", "rand_core"] }
+rand = "0.10.2"
+async-stream = "0.3.6"
+url = "2.5.8"
+bytes = "1.12.1"
+futures-util = "0.3.33"
+gstreamer = "0.25.3"
+gstreamer-app = "0.25.2"
+webp = "0.3.1"
+gstreamer-pbutils = "0.25.2"

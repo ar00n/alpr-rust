@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT is_admin FROM users WHERE username = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "is_admin",
+        "ordinal": 0,
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "users",
+            "name": "is_admin"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "e2b0606caec3bffae4ff30ace1636eba164048390d559a54c538c56eeed02f7b"
+}
