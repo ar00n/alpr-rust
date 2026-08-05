@@ -1,13 +1,15 @@
 use image::{imageops::FilterType, DynamicImage, GenericImageView};
 use ndarray::{Array4, Ix3};
 use ort::{
-    ep, inputs, session::{Session, builder::GraphOptimizationLevel}, sys::OrtLoggingLevel, value::Tensor,
+    inputs, session::{Session, builder::GraphOptimizationLevel}, sys::OrtLoggingLevel, value::Tensor,
 };
 use std::{
     error::Error,
     fs::File,
     io::{BufRead, BufReader},
 };
+
+use crate::lpr::utils::get_onnx_providers;
 
 pub struct PaddleOcr {
     session: Session,
@@ -18,10 +20,7 @@ impl PaddleOcr {
     pub fn new(model_path: &str, vocab_path: &str) -> Result<Self, Box<dyn Error>> {
         let session = Session::builder()?
             .with_optimization_level(GraphOptimizationLevel::Level3)?
-            .with_execution_providers([
-                ep::CUDA::default().build(),
-                ep::OpenVINO::default().build(),
-            ])?
+            .with_execution_providers(get_onnx_providers())?
             .with_log_verbosity(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING as i32)?
             .commit_from_file(model_path)?;
 

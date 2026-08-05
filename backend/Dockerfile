@@ -9,11 +9,11 @@ FROM chef AS planner
 COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
-# Stage 3: Build dependencies (Cached)
+# Stage 3: Build dependencies & Application (Cached)
 FROM chef AS builder
 COPY --from=planner /app/recipe.json recipe.json
 
-# Install build tools, SSL, SQLite, GLib, GStreamer dev libraries, and OpenVINO 2026.3
+# Install build tools, SSL, SQLite, GLib, GStreamer dev libraries, Python/pip, and OpenVINO
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
@@ -23,6 +23,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg \
     ca-certificates \
+    python3 \
+    python3-pip \
     libssl-dev \
     libsqlite3-dev \
     libglib2.0-dev \
@@ -35,10 +37,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openvino-2026.3.0 \
     && rm -rf /var/lib/apt/lists/*
 
+# Install pre-built ONNX Runtime with OpenVINO EP support via PyPI into /opt/ort
+RUN pip install --no-cache-dir --target /opt/ort onnxruntime-openvino
+
 # Set OpenVINO library and pkg-config paths for build stage
 ENV OPENVINO_DIR="/opt/intel/openvino_2026.3.0"
-ENV LD_LIBRARY_PATH="/opt/intel/openvino_2026.3.0/runtime/lib/intel64:${LD_LIBRARY_PATH}"
+ENV LD_LIBRARY_PATH="/opt/ort/onnxruntime/capi:/opt/intel/openvino_2026.3.0/runtime/lib/intel64:${LD_LIBRARY_PATH}"
 ENV PKG_CONFIG_PATH="/opt/intel/openvino_2026.3.0/runtime/lib/intel64/pkgconfig:${PKG_CONFIG_PATH}"
+ENV ORT_DYLIB_PATH="/opt/ort/onnxruntime/capi/libonnxruntime.so"
 
 # Cache dependencies
 RUN cargo chef cook --release --recipe-path recipe.json
@@ -73,23 +79,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openvino-2026.3.0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Set OpenVINO library paths for runtime
-ENV OPENVINO_DIR="/opt/intel/openvino_2026.3.0"
-ENV LD_LIBRARY_PATH="/opt/intel/openvino_2026.3.0/runtime/lib/intel64:${LD_LIBRARY_PATH}"
-
 WORKDIR /app
 
 # 1. Copy compiled binary
 COPY --from=builder /app/target/release/alpr_backend /usr/local/bin/alpr_backend
-COPY --from=builder /app/target/release/*.so* /app/
 
-# 2. Copy models into the image (built into image, persistent across containers)
+# 2. Copy ONNX Runtime shared objects (including libonnxruntime_providers_openvino.so)
+COPY --from=builder /opt/ort/onnxruntime/capi/*.so* /app/
+
+# 3. Copy models into the image
 COPY models /app/models
 
-# 3. Create persistent directories
+# 4. Create persistent directories
 RUN mkdir -p /app/data /app/snapshots
 
-# Configure runtime environment paths
+# Configure runtime environment paths for OpenVINO and ORT Dynamic Loading
+ENV OPENVINO_DIR="/opt/intel/openvino_2026.3.0"
+ENV LD_LIBRARY_PATH="/app:/opt/intel/openvino_2026.3.0/runtime/lib/intel64:${LD_LIBRARY_PATH}"
+ENV ORT_DYLIB_PATH="/app/libonnxruntime.so"
+
 ENV DATABASE_URL="sqlite:///app/data/anpr.db?mode=rwc"
 ENV SNAPSHOT_DIR="/app/snapshots"
 ENV SERVER_ADDR="0.0.0.0:3000"

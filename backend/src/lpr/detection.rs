@@ -1,9 +1,11 @@
 use image::{imageops::FilterType, DynamicImage, GenericImageView, Rgb, RgbImage};
 use ndarray::{Array, Axis, Ix3};
 use ort::{
-    ep, inputs, session::{Session, builder::GraphOptimizationLevel}, sys::OrtLoggingLevel, value::Tensor,
+    inputs, session::{Session, builder::GraphOptimizationLevel}, sys::OrtLoggingLevel, value::Tensor,
 };
 use std::error::Error;
+
+use crate::lpr::utils::get_onnx_providers;
 
 #[derive(Debug, Clone)]
 pub struct BoundingBox {
@@ -24,10 +26,7 @@ impl YoloDetector {
     pub fn new(model_path: &str, input_size: u32) -> Result<Self, Box<dyn Error>> {
         let session = Session::builder()?
             .with_optimization_level(GraphOptimizationLevel::Level3)?
-            .with_execution_providers([
-                ep::CUDA::default().build(),
-                ep::OpenVINO::default().build(),
-            ])?
+            .with_execution_providers(get_onnx_providers())?
             .with_log_verbosity(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING as i32)?
             .commit_from_file(model_path)?;
         Ok(Self {

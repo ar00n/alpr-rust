@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/ar00n/alpr-rust/backend:latest
     # ports:
     #   - "3000:3000"
     expose:
@@ -18,9 +16,7 @@ services:
       - backend_snapshots:/app/snapshots
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ghcr.io/ar00n/alpr-rust/backend:latest
     ports:
       - "8080:80"
     depends_on:

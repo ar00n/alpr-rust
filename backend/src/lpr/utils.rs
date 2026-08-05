@@ -2,6 +2,7 @@ use image::{
     imageops::{unsharpen, FilterType},
     DynamicImage, GenericImageView,
 };
+use ort::ep::{self, ExecutionProviderDispatch};
 
 use crate::lpr::detection::BoundingBox;
 
@@ -40,4 +41,26 @@ pub fn prepare_ocr_crop(img: &DynamicImage, bbox: &BoundingBox) -> Option<Dynami
     Some(DynamicImage::ImageRgb8(
         image::DynamicImage::ImageLuma8(sharpened).to_rgb8(),
     ))
+}
+
+pub fn get_onnx_providers() -> Vec<ExecutionProviderDispatch> {
+    let mut providers = Vec::new();
+
+    let enable_openvino = std::env::var("ENABLE_OPENVINO")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+
+    if enable_openvino {
+        providers.push(ep::OpenVINO::default().build());
+    }
+
+    let enable_cuda = std::env::var("ENABLE_CUDA")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false);
+
+    if enable_cuda {
+        providers.push(ep::CUDA::default().build());
+    }
+
+    return providers;
 }
