@@ -16,7 +16,7 @@ services:
       - backend_snapshots:/app/snapshots
 
   frontend:
-    image: ghcr.io/ar00n/alpr-rust/backend:latest
+    image: ghcr.io/ar00n/alpr-rust/frontend:latest
     ports:
       - "8080:80"
     depends_on:
