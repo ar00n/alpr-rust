@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { 
-  Zap, Trash2, AlertCircle, CheckCircle2, Play, Plus, Loader2
+  Zap, Trash2, AlertCircle, CheckCircle2, Play, Plus, Loader2,
+  Clock, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ export default function CustomActions() {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [method, setMethod] = useState('POST');
+  const [delaySeconds, setDelaySeconds] = useState<number | ''>(''); // <-- Delay state
   const [authType, setAuthType] = useState('NONE');
   const [authToken, setAuthToken] = useState('');
   const [authUsername, setAuthUsername] = useState('');
@@ -43,6 +45,8 @@ export default function CustomActions() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ status: number; body: string } | null>(null);
+  
+  const [expandedId, setExpandedId] = useState<number | null>(null); // Track expanded item
 
   const buildPayload = () => {
     let headersObj = null;
@@ -71,6 +75,7 @@ export default function CustomActions() {
       name: name.trim() || 'Unnamed Action',
       url,
       method,
+      delay_seconds: delaySeconds === '' ? 0 : Number(delaySeconds), // <-- Set delay
       auth_type: authType,
       auth_data: authData,
       headers: headersObj,
@@ -115,6 +120,7 @@ export default function CustomActions() {
       
       setName('');
       setUrl('');
+      setDelaySeconds('');
       setAuthType('NONE');
       setAuthToken('');
       setAuthUsername('');
@@ -123,7 +129,7 @@ export default function CustomActions() {
       setApiKeyName('X-API-Key');
       setApiKeyPlacement('header');
     } catch (err: any) {
-      const errorMessage = getErrorMessage(error);
+      const errorMessage = getErrorMessage(err);
       setError(errorMessage);
     }
   };
@@ -152,7 +158,7 @@ export default function CustomActions() {
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSave}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Action Name</Label>
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Open Gate 1" required />
@@ -169,6 +175,17 @@ export default function CustomActions() {
                   <option value="PUT">PUT</option>
                   <option value="DELETE">DELETE</option>
                 </select>
+              </div>
+              {/* Delay Section */}
+              <div className="space-y-2">
+                <Label>Delay (Seconds)</Label>
+                <Input 
+                  type="number" 
+                  min="0"
+                  value={delaySeconds} 
+                  onChange={e => setDelaySeconds(e.target.value === '' ? '' : Number(e.target.value))} 
+                  placeholder="0 (immediate)" 
+                />
               </div>
             </div>
 
@@ -334,28 +351,78 @@ export default function CustomActions() {
           ) : (
             <div className="space-y-3">
               {actions.map((action: any) => (
-                <div key={action.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg bg-card gap-4">
-                  <div className="space-y-1 overflow-hidden">
-                    <h4 className="font-semibold text-sm flex items-center gap-2">
-                      {action.name}
-                      <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary font-mono font-normal">
-                        {action.method}
-                      </span>
-                    </h4>
-                    <p className="text-xs text-muted-foreground truncate" title={action.url}>
-                      {action.url}
-                    </p>
+                <div key={action.id} className="flex flex-col p-4 border rounded-lg bg-card gap-2 transition-all">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div 
+                      className="space-y-1 overflow-hidden cursor-pointer flex-1"
+                      onClick={() => setExpandedId(expandedId === action.id ? null : action.id)}
+                    >
+                      <h4 className="font-semibold text-sm flex items-center gap-2">
+                        {action.name}
+                        <span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary font-mono font-normal">
+                          {action.method}
+                        </span>
+                        {/* Show configured delay visually */}
+                        {action.delay_seconds > 0 && (
+                          <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 font-mono font-normal">
+                            <Clock className="w-3 h-3" />
+                            {action.delay_seconds}s delay
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-xs text-muted-foreground truncate" title={action.url}>
+                        {action.url}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setExpandedId(expandedId === action.id ? null : action.id)}
+                        className="shrink-0"
+                      >
+                        {expandedId === action.id ? <ChevronUp className="w-4 h-4 sm:mr-1" /> : <ChevronDown className="w-4 h-4 sm:mr-1" />}
+                        <span className="hidden sm:inline">{expandedId === action.id ? 'Hide' : 'Details'}</span>
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleDelete(action.id)}
+                        disabled={deleteActionMutation.isPending}
+                        className="shrink-0"
+                      >
+                        <Trash2 className="w-4 h-4 sm:mr-1" />
+                        <span className="hidden sm:inline">Delete</span>
+                      </Button>
+                    </div>
                   </div>
-                  <Button 
-                    variant="destructive" 
-                    size="sm"
-                    onClick={() => handleDelete(action.id)}
-                    disabled={deleteActionMutation.isPending}
-                    className="shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Delete</span>
-                  </Button>
+
+                  {expandedId === action.id && (
+                    <div className="mt-3 pt-3 border-t space-y-3 text-sm animate-in fade-in slide-in-from-top-2">
+                      <div>
+                        <span className="font-medium text-muted-foreground block mb-1">Authentication</span>
+                        <Badge variant="secondary">{action.auth_type}</Badge>
+                      </div>
+
+                      {action.headers && Object.keys(action.headers).length > 0 && (
+                        <div>
+                          <span className="font-medium text-muted-foreground block mb-1">Headers</span>
+                          <pre className="p-2 bg-muted rounded-md text-xs overflow-auto max-h-40 font-mono">
+                            {JSON.stringify(action.headers, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+
+                      {action.body_template && (
+                        <div>
+                          <span className="font-medium text-muted-foreground block mb-1">Body Template</span>
+                          <pre className="p-2 bg-muted rounded-md text-xs overflow-auto max-h-40 font-mono">
+                            {action.body_template}
+                          </pre>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -371,9 +438,10 @@ function Badge({ children, variant, className }: any) {
   const variants: any = {
     default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
     destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+    secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80", // Added secondary variant
   };
   return (
-    <div className={`${base} ${variants[variant]} ${className || ''}`}>
+    <div className={`${base} ${variants[variant] || variants.default} ${className || ''}`}>
       {children}
     </div>
   );

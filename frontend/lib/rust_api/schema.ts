@@ -44,6 +44,8 @@ export interface CreateCustomAction {
   auth_type: string;
   /** @nullable */
   body_template?: string | null;
+  /** @nullable */
+  delay_seconds?: number | null;
   /** Optional custom headers */
   headers?: unknown;
   method: string;
@@ -61,6 +63,8 @@ export interface CustomActionResponse {
   auth_type: string;
   /** @nullable */
   body_template?: string | null;
+  /** @nullable */
+  delay_seconds?: number | null;
   headers?: unknown;
   id: number;
   method: string;
@@ -103,6 +107,10 @@ export interface TestActionResponse {
 export interface UpdateFrameratePayload {
   /** @minimum 0 */
   framerate: number;
+}
+
+export interface UpdateMinConfidencePayload {
+  min_confidence: number;
 }
 
 export interface UpdateRTSPUrlPayload {
@@ -150,6 +158,8 @@ plate?: string;
 };
 
 export type UpdateFramerate200 = { [key: string]: unknown };
+
+export type UpdateMinConfidence200 = { [key: string]: unknown };
 
 export type UpdateRtspUrl200 = { [key: string]: unknown };
 
@@ -941,6 +951,152 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getUpdateFramerateMutationOptions(options), queryClient);
     }
 
+export const getMinConfidence = (
+
+ options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
+) => {
+
+
+      return customAxios<UpdateMinConfidencePayload>(
+      {url: `/api/settings/min-confidence`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetMinConfidenceQueryKey = () => {
+    return [
+    `/api/settings/min-confidence`
+    ] as const;
+    }
+
+
+export const getGetMinConfidenceQueryOptions = <TData = Awaited<ReturnType<typeof getMinConfidence>>, TError = AppErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMinConfidence>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMinConfidenceQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMinConfidence>>> = ({ signal }) => getMinConfidence(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMinConfidence>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMinConfidenceQueryResult = NonNullable<Awaited<ReturnType<typeof getMinConfidence>>>
+export type GetMinConfidenceQueryError = AppErrorResponse
+
+
+export function useGetMinConfidence<TData = Awaited<ReturnType<typeof getMinConfidence>>, TError = AppErrorResponse>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMinConfidence>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMinConfidence>>,
+          TError,
+          Awaited<ReturnType<typeof getMinConfidence>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMinConfidence<TData = Awaited<ReturnType<typeof getMinConfidence>>, TError = AppErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMinConfidence>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMinConfidence>>,
+          TError,
+          Awaited<ReturnType<typeof getMinConfidence>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMinConfidence<TData = Awaited<ReturnType<typeof getMinConfidence>>, TError = AppErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMinConfidence>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetMinConfidence<TData = Awaited<ReturnType<typeof getMinConfidence>>, TError = AppErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMinConfidence>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMinConfidenceQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const updateMinConfidence = (
+    updateMinConfidencePayload: UpdateMinConfidencePayload,
+ options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
+) => {
+
+
+      return customAxios<UpdateMinConfidence200>(
+      {url: `/api/settings/min-confidence`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateMinConfidencePayload, signal
+    },
+      options);
+    }
+
+
+
+
+export const getUpdateMinConfidenceMutationOptions = <TError = AppErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMinConfidence>>, TError,{data: UpdateMinConfidencePayload}, TContext>, request?: SecondParameter<typeof customAxios>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMinConfidence>>, TError,{data: UpdateMinConfidencePayload}, TContext> => {
+
+const mutationKey = ['updateMinConfidence'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMinConfidence>>, {data: UpdateMinConfidencePayload}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateMinConfidence(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMinConfidenceMutationResult = NonNullable<Awaited<ReturnType<typeof updateMinConfidence>>>
+    export type UpdateMinConfidenceMutationBody = UpdateMinConfidencePayload
+    export type UpdateMinConfidenceMutationError = AppErrorResponse
+
+    export const useUpdateMinConfidence = <TError = AppErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMinConfidence>>, TError,{data: UpdateMinConfidencePayload}, TContext>, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMinConfidence>>,
+        TError,
+        {data: UpdateMinConfidencePayload},
+        TContext
+      > => {
+      return useMutation(getUpdateMinConfidenceMutationOptions(options), queryClient);
+    }
+
 export const getRtspUrl = (
 
  options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
@@ -1658,7 +1814,7 @@ export const createUser = (
 
 
 
-export const getCreateUserMutationOptions = <TError = string | void | AppErrorResponse,
+export const getCreateUserMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserPayload}, TContext> => {
 
@@ -1687,9 +1843,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateUserMutationResult = NonNullable<Awaited<ReturnType<typeof createUser>>>
     export type CreateUserMutationBody = CreateUserPayload
-    export type CreateUserMutationError = string | void | AppErrorResponse
+    export type CreateUserMutationError = AppErrorResponse
 
-    export const useCreateUser = <TError = string | void | AppErrorResponse,
+    export const useCreateUser = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createUser>>,

@@ -72,6 +72,11 @@ pub struct UpdateTrimHistoryPayload {
     pub trim_history_days: Option<u64>,
 }
 
+#[derive(Debug, Deserialize, Serialize, utoipa::ToSchema)]
+pub struct UpdateMinConfidencePayload {
+    pub min_confidence: f32,
+}
+
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct UserLoginRequest {
     pub username: String,
@@ -96,6 +101,7 @@ pub struct PipelineConfig {
     pub rtsp_url: Option<String>,
     pub trim_snapshots_mb: Option<u64>,
     pub trim_history_days: Option<u64>,
+    pub min_confidence: f32
 }
 
 #[derive(Clone, Debug)]
@@ -120,6 +126,7 @@ pub struct CreateCustomAction {
     pub headers: Option<serde_json::Value>, 
     #[schema(example = "{\"plate\": \"${LICENCE_PLATE}\"}")]
     pub body_template: Option<String>,
+    pub delay_seconds: Option<i64>,
 }
 
 #[derive(Debug, Serialize, utoipa::ToSchema)]
@@ -132,6 +139,7 @@ pub struct CustomActionResponse {
     // Note: auth_data is intentionally omitted for security!
     pub headers: Option<serde_json::Value>,
     pub body_template: Option<String>,
+    pub delay_seconds: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, utoipa::ToSchema)]

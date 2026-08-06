@@ -23,6 +23,7 @@ pub fn start_lpr_system(
     // WORKER 1: Dedicated Inference Thread (Blocking)
     // ---------------------------------------------------------
     let mut shutdown_rx_w1 = shutdown_rx.resubscribe();
+    let config_rx_w1 = config_rx.clone();
 
     tokio::task::spawn_blocking(move || {
         let mut pipeline = LprPipeline::new(
@@ -64,7 +65,7 @@ pub fn start_lpr_system(
 
             match result {
                 Ok(Some((plate, confidence))) => {
-                    if confidence < 0.8 {
+                    if confidence < config_rx_w1.borrow().min_confidence {
                         tracing::debug!("⚠️ Low confidence plate read: {} ({:.2})", plate, confidence);
                         continue;
                     }

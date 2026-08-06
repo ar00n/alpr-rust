@@ -8,7 +8,7 @@ pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &
 
     let records = sqlx::query!(
         r#"
-        SELECT name, method, url, auth_type, auth_data, headers, body_template 
+        SELECT name, method, url, auth_type, auth_data, headers, body_template, delay_seconds 
         FROM custom_actions
         "#
         )
@@ -20,7 +20,6 @@ pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &
     let mut actions = Vec::new();
 
     for rec in records {
-        // Parse headers back into JSON value if it exists
         let headers_val = rec.headers.and_then(|h| serde_json::from_str(&h).ok());
 
         let decrypted_auth = match rec.auth_data.as_deref().filter(|s| !s.is_empty()) {
@@ -28,7 +27,7 @@ pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &
                 Ok(decrypted) => Some(decrypted),
                 Err(err) => {
                     tracing::error!("Failed to decrypt auth_data for action '{}': {:?}", rec.name, err);
-                    continue; // Skip this action, process the rest
+                    continue; 
                 }
             },
             None => None,
@@ -39,7 +38,7 @@ pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &
                 Ok(parsed) => Some(parsed),
                 Err(err) => {
                     tracing::error!("Failed to parse decrypted auth_data JSON for action '{}': {:?}", rec.name, err);
-                    continue; // Skip this action
+                    continue; 
                 }
             },
             None => None,
@@ -53,10 +52,17 @@ pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &
             auth_data,
             headers: headers_val,
             body_template: rec.body_template,
+            delay_seconds: rec.delay_seconds, // Map delay
         });
     }
 
-    let futures = actions.iter().map(|action| {
+    let futures = actions.iter().map(|action| async move {
+        if let Some(delay) = action.delay_seconds {
+            if delay > 0 {
+                tokio::time::sleep(std::time::Duration::from_secs(delay as u64)).await;
+            }
+        }
+
         execute_action(
             &action.url,
             &action.method,
@@ -65,7 +71,7 @@ pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &
             &action.auth_type,
             action.auth_data.as_ref(),
             plate,
-        )
+        ).await
     });
 
     let results = join_all(futures).await;

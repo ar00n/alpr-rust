@@ -1,11 +1,22 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT name, method, url, auth_type, auth_data, headers, body_template \n        FROM custom_actions\n        ",
+  "query": "\n        SELECT id, name, method, url, auth_type, headers, body_template, delay_seconds \n        FROM custom_actions\n        ",
   "describe": {
     "columns": [
       {
-        "name": "name",
+        "name": "id",
         "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "custom_actions",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -16,7 +27,7 @@
       },
       {
         "name": "method",
-        "ordinal": 1,
+        "ordinal": 2,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -27,7 +38,7 @@
       },
       {
         "name": "url",
-        "ordinal": 2,
+        "ordinal": 3,
         "type_info": "Text",
         "origin": {
           "Table": {
@@ -38,23 +49,12 @@
       },
       {
         "name": "auth_type",
-        "ordinal": 3,
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "custom_actions",
-            "name": "auth_type"
-          }
-        }
-      },
-      {
-        "name": "auth_data",
         "ordinal": 4,
         "type_info": "Text",
         "origin": {
           "Table": {
             "table": "custom_actions",
-            "name": "auth_data"
+            "name": "auth_type"
           }
         }
       },
@@ -79,6 +79,17 @@
             "name": "body_template"
           }
         }
+      },
+      {
+        "name": "delay_seconds",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "custom_actions",
+            "name": "delay_seconds"
+          }
+        }
       }
     ],
     "parameters": {
@@ -89,10 +100,11 @@
       false,
       false,
       false,
+      false,
       true,
       true,
       true
     ]
   },
-  "hash": "520c8fb8988f6cccc38e4bf99194006ea644ed4ee895cdebaad4759d6637ad79"
+  "hash": "0fdd4f88cb703d406b052e5f3fdfffa7d7668492b692fa287f393f13b58cb4aa"
 }

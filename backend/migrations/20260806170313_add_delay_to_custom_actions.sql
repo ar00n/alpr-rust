@@ -1,0 +1,1 @@
+ALTER TABLE custom_actions ADD COLUMN delay_seconds INTEGER DEFAULT 0;

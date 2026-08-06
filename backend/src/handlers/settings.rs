@@ -2,8 +2,7 @@ use axum::{extract::State, Extension, Json};
 
 use crate::{
     error::{AppError, AppErrorResponse}, models::{
-        UpdateFrameratePayload, UpdateRTSPUrlPayload, UpdateTrimHistoryPayload, 
-        UpdateTrimSnapshotsPayload, User
+        UpdateFrameratePayload, UpdateMinConfidencePayload, UpdateRTSPUrlPayload, UpdateTrimHistoryPayload, UpdateTrimSnapshotsPayload, User
     }, rtsp::validate_rtsp_url, state::AppState,
 };
 
@@ -264,4 +263,61 @@ pub async fn get_trim_history(
 ) -> Result<Json<UpdateTrimHistoryPayload>, AppError> {
     let trim_history_days = state.pipeline_config_tx.borrow().trim_history_days;
     Ok(Json(UpdateTrimHistoryPayload { trim_history_days }))
+}
+
+#[utoipa::path(
+    put,
+    path = "/api/settings/min-confidence",
+    request_body = UpdateMinConfidencePayload,
+    responses(
+        (status = 200, description = "Minimum confidence updated successfully", body = Object),
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Settings"
+)]
+pub async fn update_min_confidence(
+    State(state): State<AppState>,
+    Extension(_user): Extension<User>,
+    Json(payload): Json<UpdateMinConfidencePayload>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    update_db_setting(
+        &state.db, 
+        "min_confidence", 
+        Some(payload.min_confidence.to_string())
+    ).await?;
+
+    state.pipeline_config_tx.send_modify(|config| {
+        config.min_confidence = payload.min_confidence;
+    });
+
+    Ok(Json(
+        serde_json::json!({"status": "success", "min_confidence": payload.min_confidence}),
+    ))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/settings/min-confidence",
+    responses(
+        (status = 200, description = "Current processing framerate", body = UpdateMinConfidencePayload),
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "Settings"
+)]
+pub async fn get_min_confidence(
+    State(state): State<AppState>,
+    Extension(_user): Extension<User>,
+) -> Result<Json<UpdateMinConfidencePayload>, AppError> {
+    let min_confidence = state.pipeline_config_tx.borrow().min_confidence;
+    Ok(Json(UpdateMinConfidencePayload { min_confidence }))
 }

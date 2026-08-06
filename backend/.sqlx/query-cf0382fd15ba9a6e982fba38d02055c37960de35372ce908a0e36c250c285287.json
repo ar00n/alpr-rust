@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        INSERT INTO custom_actions (\n            name, method, url, auth_type, auth_data, headers, body_template\n        )\n        VALUES (?, ?, ?, ?, ?, ?, ?)\n        RETURNING id\n        ",
+  "query": "\n        INSERT INTO custom_actions (\n            name, method, url, auth_type, auth_data, headers, body_template, delay_seconds\n        )\n        VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n        RETURNING id\n        ",
   "describe": {
     "columns": [
       {
@@ -16,11 +16,11 @@
       }
     ],
     "parameters": {
-      "Right": 7
+      "Right": 8
     },
     "nullable": [
       false
     ]
   },
-  "hash": "579d64efb8559ce06ac99a5a529b088759298bfdee19b8ff8cd40c6a27cd6ea5"
+  "hash": "cf0382fd15ba9a6e982fba38d02055c37960de35372ce908a0e36c250c285287"
 }
