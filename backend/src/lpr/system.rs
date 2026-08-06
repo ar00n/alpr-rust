@@ -59,34 +59,37 @@ pub fn start_lpr_system(
                 break;
             };
 
-            let result = pipeline.recognize_plate_from_rgb(map.as_slice(), frame.width, frame.height);
+            let results = pipeline.recognize_plate_from_rgb(map.as_slice(), frame.width, frame.height);
 
+            // Drop map to release the buffer lock before sending the frame through channels
             drop(map);
 
-            match result {
-                Ok(Some((plate, confidence))) => {
-                    if confidence < config_rx_w1.borrow().min_confidence {
-                        tracing::debug!("⚠️ Low confidence plate read: {} ({:.2})", plate, confidence);
-                        continue;
-                    }
+            match results {
+                Ok(results) => {
+                    for (plate, confidence) in results {
+                        if confidence < config_rx_w1.borrow().min_confidence {
+                            tracing::debug!("⚠️ Low confidence plate read: {} ({:.2})", plate, confidence);
+                            continue;
+                        }
 
-                    if debounce_cache.get(&plate).is_some() {
-                        continue;
-                    }
+                        if debounce_cache.get(&plate).is_some() {
+                            continue;
+                        }
 
-                    debounce_cache.insert(plate.clone(), ());
+                        debounce_cache.insert(plate.clone(), ());
 
-                    let event = PlateEvent {
-                        plate,
-                        confidence,
-                        frame,
-                    };
+                        let event = PlateEvent {
+                            plate,
+                            confidence,
+                            frame: frame.clone(),
+                        };
 
-                    if event_tx.blocking_send(event).is_err() {
-                        break;
+                        if event_tx.blocking_send(event).is_err() {
+                            // The channel is closed, break the inner loop (outer loop will exit next iteration)
+                            break;
+                        }
                     }
                 }
-                Ok(None) => {}
                 Err(e) => tracing::error!("⚠️ Inference Error: {}", e),
             }
         }

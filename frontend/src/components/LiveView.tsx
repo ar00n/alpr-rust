@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Camera, AlertCircle, Loader2, RefreshCw, Clock, RotateCw, CheckCircle2, XCircle } from 'lucide-react';
 import type { PlateRead } from '@/lib/rust_api/schema';
-import { useMjpegStream } from '@/src/hooks/useMjpegStream';
+import { useMjpegStream } from '@/src/hooks/useWebpStream';
 import { cn } from '@/lib/utils';
 
 interface LiveViewProps {

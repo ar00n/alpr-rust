@@ -24,7 +24,7 @@ pub async fn save(frame: &VideoFrame, plate: &str, snapshot_dir: &str) -> Option
         let dynamic_img = DynamicImage::ImageRgb8(img_buf);
 
         // Range: 0.0 (max compression / lowest quality) to 100.0 (best quality)
-        let quality = 1.0; 
+        let quality = 5.0; 
 
         let encoder = Encoder::from_image(&dynamic_img).ok()?;
         let encoded_webp = encoder.encode(quality);

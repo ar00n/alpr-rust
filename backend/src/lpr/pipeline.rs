@@ -3,7 +3,7 @@ use image::{DynamicImage, ImageBuffer, Rgb};
 
 use crate::lpr::detection::YoloDetector;
 use crate::lpr::recognition::PaddleOcr;
-use crate::lpr::utils;
+use crate::lpr::utils::{self, clean_uk_numberplate};
 
 pub struct LprPipeline {
     detector: YoloDetector,
@@ -26,7 +26,7 @@ impl LprPipeline {
         frame: &[u8],
         width: u32,
         height: u32,
-    ) -> Result<Option<(String, f32)>, Box<dyn Error>> {
+    ) -> Result<Vec<(String, f32)>, Box<dyn Error>> {
         let expected_len = (width as usize) * (height as usize) * 3;
         if frame.len() != expected_len {
             return Err("buffer length mismatch".into());
@@ -38,26 +38,21 @@ impl LprPipeline {
         
         let img = DynamicImage::ImageRgb8(img_buf);
         let bboxes = self.detector.detect(&img)?;
-        
-        if bboxes.is_empty() {
-            return Ok(None);
-        }
+
+        let mut results = Vec::new();
 
         for bbox in &bboxes {
             if let Some(processed_crop) = utils::prepare_ocr_crop(&img, bbox) {
                 if let Ok((text, confidence)) = self.recognizer.recognize(&processed_crop) {
-                    let cleaned: String = text
-                        .chars()
-                        .filter(|c| c.is_alphanumeric())
-                        .collect::<String>()
-                        .to_uppercase();
+                    let cleaned: String = clean_uk_numberplate(&text);
 
                     if !cleaned.is_empty() {
-                        return Ok(Some((cleaned, confidence)));
+                        results.push((cleaned, confidence));
                     }
                 }
             }
         }
-        Ok(None)
+        
+        Ok(results)
     }
 }

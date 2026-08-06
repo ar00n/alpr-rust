@@ -64,3 +64,96 @@ pub fn get_onnx_providers() -> Vec<ExecutionProviderDispatch> {
 
     return providers;
 }
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum CharType {
+    Letter,
+    Number,
+}
+
+fn fix_char(c: char, expected: CharType) -> char {
+    match expected {
+        CharType::Letter => match c {
+            '0' => 'O',
+            '1' => 'I',
+            '2' => 'Z',
+            '3' => 'J',
+            '4' => 'A',
+            '5' => 'S',
+            '6' => 'G',
+            '7' => 'T',
+            '8' => 'B',
+            _ => c,
+        },
+        CharType::Number => match c {
+            'O' | 'Q' | 'D' => '0',
+            'I' | 'L' => '1',
+            'Z' => '2',
+            'J' => '3',
+            'A' => '4',
+            'S' => '5',
+            'G' => '6',
+            'T' => '7',
+            'B' => '8',
+            _ => c,
+        },
+    }
+}
+
+/// Checks if a character matches the expected type.
+fn matches_expected(c: char, expected: CharType) -> bool {
+    match expected {
+        CharType::Letter => c.is_ascii_alphabetic(),
+        CharType::Number => c.is_ascii_digit(),
+    }
+}
+
+fn score_template(plate: &str, template: &[CharType]) -> usize {
+    plate
+        .chars()
+        .zip(template.iter())
+        .filter(|&(c, &expected)| matches_expected(c, expected))
+        .count()
+}
+
+fn apply_template(plate: &str, template: &[CharType]) -> String {
+    plate
+        .chars()
+        .zip(template.iter())
+        .map(|(c, &expected)| fix_char(c, expected))
+        .collect()
+}
+
+pub fn clean_uk_numberplate(ocr_text: &str) -> String {
+    let sanitized: String = ocr_text
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .map(|c| c.to_ascii_uppercase())
+        .collect();
+
+    if sanitized.len() == 7 {
+        use CharType::{Letter as L, Number as N};
+
+        // Format 1: Current (Since 2001) -> e.g., AB12 CDE
+        let current_format = [L, L, N, N, L, L, L];
+        // Format 2: Prefix (1983-2001) -> e.g., A123 BCD
+        let prefix_format = [L, N, N, N, L, L, L];
+        // Format 3: Suffix (1963-1983) -> e.g., ABC 123D
+        let suffix_format = [L, L, L, N, N, N, L];
+
+        let templates = [
+            &current_format[..], // Checked first, wins tie-breakers
+            &prefix_format[..],
+            &suffix_format[..],
+        ];
+
+        let best_template = templates
+            .iter()
+            .max_by_key(|&&t| score_template(&sanitized, t))
+            .unwrap();
+
+        return apply_template(&sanitized, best_template);
+    }
+
+    sanitized
+}
