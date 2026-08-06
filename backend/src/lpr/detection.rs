@@ -61,7 +61,7 @@ impl YoloDetector {
         let input_tensor = chw_array.mapv(|p| p as f32 / 255.0).insert_axis(Axis(0));
 
         let mut raw_boxes = Vec::new();
-        let confidence_threshold = 0.65;
+        let confidence_threshold = 0.8;
         let iou_threshold = 0.45;
 
         {

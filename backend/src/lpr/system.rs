@@ -64,7 +64,7 @@ pub fn start_lpr_system(
 
             match result {
                 Ok(Some((plate, confidence))) => {
-                    if confidence < 0.5 {
+                    if confidence < 0.8 {
                         tracing::debug!("⚠️ Low confidence plate read: {} ({:.2})", plate, confidence);
                         continue;
                     }
