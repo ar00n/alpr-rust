@@ -16,6 +16,7 @@ import {
   CardFooter,
 } from "@/components/ui/card"
 import { useGetRtspUrl, useUpdateRtspUrl } from "@/lib/rust_api/schema"
+import { getErrorMessage } from "../main";
 
 export function RtspSetupModal() {
   const { isAuthenticated, isAdmin } = useAuthStore()
@@ -51,10 +52,7 @@ export function RtspSetupModal() {
         }, 2000)
       } catch (error: any) {
         // Extract error message from Rust backend HTTP 400 response
-        const errorMessage =
-          error?.response?.data ||
-          error?.message ||
-          "Failed to validate RTSP connection. Please check the URL and try again."
+        const errorMessage = getErrorMessage(error);
 
         setServerError(errorMessage)
       }

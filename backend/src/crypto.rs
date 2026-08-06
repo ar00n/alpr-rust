@@ -1,9 +1,15 @@
 use std::env;
 use std::fs;
+use std::fs::OpenOptions;
 use std::path::Path;
+use std::os::unix::fs::OpenOptionsExt;
+use std::io::Write;
 
 use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
 use aes_gcm::aead::Aead;
+use rand::rand_core::UnwrapErr;
+use rand::rngs::SysRng;
+use rand::Rng;
 
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
@@ -11,7 +17,7 @@ use base64::Engine;
 use crate::error::AppError;
 
 /// Retrieves the encryption key from `ENCRYPTION_KEY` env var,
-/// or reads/generates a key at `keys/encryption_key.txt`.
+/// or reads/generates a key at `data/keys/encryption_key.txt`.
 pub fn get_or_create_key() -> Result<Vec<u8>, AppError> {
     if let Ok(env_key) = env::var("ENCRYPTION_KEY") {
         let trimmed = env_key.trim();
@@ -46,11 +52,15 @@ pub fn get_or_create_key() -> Result<Vec<u8>, AppError> {
             .map_err(|_| AppError::internal("Failed to create keys directory"))?;
 
         let mut key_bytes = [0u8; 32];
-        rand::fill(&mut key_bytes);
+        let mut sys_rng = UnwrapErr(SysRng);
+        sys_rng.fill_bytes(&mut key_bytes);
 
         let encoded_key = STANDARD.encode(key_bytes);
-        fs::write(&key_path, encoded_key)
-            .map_err(|_| AppError::internal("Failed to write encryption key file"))?;
+
+        let mut options = OpenOptions::new();
+        options.write(true).create(true).truncate(true).mode(0o600);
+        options.open(key_path).map_err(|_| AppError::internal("Failed to open encryption key file"))?
+            .write_all(encoded_key.as_bytes()).map_err(|_| AppError::internal("Failed to write encryption key file"))?;
 
         Ok(key_bytes.to_vec())
     }

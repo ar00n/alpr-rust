@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -87,7 +85,7 @@ pub struct LoginResponse {
 
 #[derive(Clone, Debug)]
 pub struct VideoFrame {
-    pub data: Arc<[u8]>,
+    pub buffer: gstreamer::Buffer,
     pub width: u32,
     pub height: u32,
 }

@@ -36,7 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     std::fs::create_dir_all(&snapshot_dir).unwrap();
 
     let (plate_tx, _) = broadcast::channel::<PlateRead>(100);
-    let (rtsp_tx, _) = broadcast::channel::<Bytes>(100);
+    let (rtsp_tx, _) = broadcast::channel::<Option<Bytes>>(100);
     let (pipeline_frame_tx, pipeline_frame_rx) = watch::channel::<Option<VideoFrame>>(None);
     let (shutdown_tx, _) = broadcast::channel::<()>(1);
 
@@ -66,8 +66,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let rtsp_shutdown_rx = shutdown_tx.subscribe();
     
     let pipeline_config_rx_rtsp = pipeline_config_rx.clone();
-    let rtsp_handle = tokio::task::spawn_blocking(move || {
-        if let Err(e) = start_rtsp_ingest(tx_clone, pipeline_tx_clone, pipeline_config_rx_rtsp, rtsp_shutdown_rx) {
+    let rtsp_handle = tokio::spawn(async move {
+        if let Err(e) = start_rtsp_ingest(tx_clone, pipeline_tx_clone, pipeline_config_rx_rtsp, rtsp_shutdown_rx).await {
             tracing::error!("RTSP stream error: {:?}", e);
         }
     });

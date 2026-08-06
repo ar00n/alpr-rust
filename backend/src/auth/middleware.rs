@@ -52,7 +52,7 @@ pub async fn admin_middleware(
     req: Request,
     next: Next,
 ) -> Result<Response, AppError> {
-    if user.username != "admin" {
+    if !user.is_admin {
         return Err(AppError::forbidden("Admin privileges required"));
     }
 

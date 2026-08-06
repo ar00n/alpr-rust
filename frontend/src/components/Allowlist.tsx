@@ -33,7 +33,6 @@ export default function Allowlist() {
     },
   });
 
-  // Hook to delete plate
   const { mutate: deletePlate, isPending: isDeleting } = useDeleteAllowList({
     mutation: {
       onSuccess: () => {

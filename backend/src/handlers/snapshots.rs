@@ -7,7 +7,7 @@ use axum::{
 use std::path::PathBuf;
 use tokio::fs;
 
-use crate::{error::AppError, models::User, state::AppState};
+use crate::{error::{AppError, AppErrorResponse}, models::User, state::AppState};
 
 #[utoipa::path(
     get,
@@ -17,10 +17,10 @@ use crate::{error::AppError, models::User, state::AppState};
     ),
     responses(
         (status = 200, description = "Snapshot image", content_type = "image/png"),
-        (status = 400, description = "Invalid image ID"),
-        (status = 401, description = "Unauthorized"),
-        (status = 404, description = "Snapshot not found"),
-        (status = 500, description = "Failed to read file")
+        (status = 400, description = "Invalid image ID", body = AppErrorResponse),
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 404, description = "Snapshot not found", body = AppErrorResponse),
+        (status = 500, description = "Failed to read file", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])

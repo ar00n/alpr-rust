@@ -3,7 +3,7 @@ use chrono::{Duration, Utc};
 use jsonwebtoken::encode;
 
 use crate::{
-    error::AppError, models::{ChangePasswordPayload, Claims, CreateUserPayload, LoginResponse, User, UserLoginRequest, UserResponse}, state::AppState,
+    error::{AppError, AppErrorResponse}, models::{ChangePasswordPayload, Claims, CreateUserPayload, LoginResponse, User, UserLoginRequest, UserResponse}, state::AppState,
 };
 
 #[utoipa::path(
@@ -12,10 +12,10 @@ use crate::{
     request_body = CreateUserPayload,
     responses(
         (status = 200, description = "User created successfully", body = UserResponse),
-        (status = 400, description = "Bad request (e.g. user exists)", body = String),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
-        (status = 500, description = "Server error", body = String)
+        (status = 400, description = "Bad request (e.g. user exists)", body = AppErrorResponse),
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Server error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -109,11 +109,11 @@ pub async fn login_user(
     ),
     responses(
         (status = 200, description = "User deleted successfully"),
-        (status = 400, description = "Bad Request (Cannot delete the last admin)"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
-        (status = 404, description = "User not found"),
-        (status = 500, description = "Server error")
+        (status = 400, description = "Bad Request (Cannot delete the last admin)", body = AppErrorResponse),
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 404, description = "User not found", body = AppErrorResponse),
+        (status = 500, description = "Server error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -175,11 +175,11 @@ pub async fn delete_user(
     ),
     responses(
         (status = 200, description = "Password updated successfully"),
-        (status = 400, description = "Bad request"),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Not admin and not self)"),
-        (status = 404, description = "User not found"),
-        (status = 500, description = "Server error")
+        (status = 400, description = "Bad request", body = AppErrorResponse),
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Not admin and not self)", body = AppErrorResponse),
+        (status = 404, description = "User not found", body = AppErrorResponse),
+        (status = 500, description = "Server error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -221,7 +221,7 @@ pub async fn change_password(
     responses(
         (status = 200, description = "List of all users retrieved successfully", body = [UserResponse]),
         (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
         (status = 500, description = "Server error", body = String)
     ),
     security(

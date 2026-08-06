@@ -1,4 +1,3 @@
-use axum::body::Bytes;
 use jsonwebtoken::{DecodingKey, EncodingKey, Header};
 use sqlx::SqlitePool;
 use tokio::sync::{broadcast, watch};
@@ -16,7 +15,7 @@ pub struct JWT {
 pub struct AppState {
     pub db: SqlitePool,
     pub plate_tx: broadcast::Sender<PlateRead>,
-    pub rtsp_tx: broadcast::Sender<Bytes>,
+    pub rtsp_tx: broadcast::Sender<Option<axum::body::Bytes>>,
     pub pipeline_config_tx: watch::Sender<PipelineConfig>,
     pub jwt: JWT,
     pub encryption_key: Vec<u8>,

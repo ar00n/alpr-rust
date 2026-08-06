@@ -12,26 +12,29 @@ import App from './App.tsx'
 import { Toaster } from '@/components/ui/sonner.tsx'
 import { useAuthStore } from './store/useAuthStore.ts';
 
+export const getErrorMessage = (error: any, fallbackMessage?: string): string => {
+  if (fallbackMessage) return fallbackMessage
+
+  const responseData = error?.response?.data || error?.data
+  const rawError = responseData?.error || responseData?.message || error?.message
+
+  if (typeof rawError === 'string') {
+    return rawError
+  }
+
+  if (typeof rawError === 'object' && rawError !== null) {
+    return rawError.message || rawError.detail || JSON.stringify(rawError)
+  }
+
+  return 'An error occurred'
+}
+
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error: any, query: any) => {
       if (query.meta?.suppressToast) return
 
-      const responseData = error?.response?.data || error?.data
-
-      const payloadMessage =
-        typeof responseData === 'string'
-          ? responseData
-          : Array.isArray(responseData?.message)
-          ? responseData.message.join(', ')
-          : responseData?.message || responseData?.error
-
-      const errorMessage =
-        (query.meta?.errorMessage as string) ||
-        payloadMessage ||
-        error?.message ||
-        'An error occurred'
-
+      const errorMessage = getErrorMessage(error, query.meta?.errorMessage as string)
       toast.error(errorMessage)
     },
   }),
@@ -40,21 +43,8 @@ export const queryClient = new QueryClient({
     onError: (error: any, _variables, _context, mutation) => {
       if (mutation.meta?.suppressToast) return
 
-      const responseData = error?.response?.data || error?.data
-
-      const payloadMessage =
-        typeof responseData === 'string'
-          ? responseData
-          : Array.isArray(responseData?.message)
-          ? responseData.message.join(', ')
-          : responseData?.message || responseData?.error
-
-      const errorMessage =
-        (mutation.meta?.errorMessage as string) ||
-        payloadMessage ||
-        error?.message ||
-        'An error occurred'
-
+      const errorMessage = getErrorMessage(error, mutation.meta?.errorMessage as string)
+      
       toast.error(errorMessage)
     },
   }),

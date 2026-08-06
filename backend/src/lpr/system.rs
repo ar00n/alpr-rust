@@ -54,7 +54,15 @@ pub fn start_lpr_system(
             let frame_opt = frame_rx.borrow_and_update().clone();
             let Some(frame) = frame_opt else { continue };
 
-            match pipeline.recognize_plate_from_rgb(&frame.data, frame.width, frame.height) {
+            let Ok(map) = frame.buffer.map_readable() else {
+                break;
+            };
+
+            let result = pipeline.recognize_plate_from_rgb(map.as_slice(), frame.width, frame.height);
+
+            drop(map);
+
+            match result {
                 Ok(Some((plate, confidence))) => {
                     if confidence < 0.5 {
                         tracing::debug!("⚠️ Low confidence plate read: {} ({:.2})", plate, confidence);

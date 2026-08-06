@@ -1,13 +1,12 @@
 use axum::{extract::State, Extension, Json};
 
 use crate::{
-    error::AppError, models::{
+    error::{AppError, AppErrorResponse}, models::{
         UpdateFrameratePayload, UpdateRTSPUrlPayload, UpdateTrimHistoryPayload, 
         UpdateTrimSnapshotsPayload, User
     }, rtsp::validate_rtsp_url, state::AppState,
 };
 
-/// Helper function to reduce boilerplate when updating a single setting in the DB
 async fn update_db_setting(
     db: &sqlx::Pool<sqlx::Sqlite>,
     key: &str,
@@ -36,9 +35,9 @@ async fn update_db_setting(
     request_body = UpdateFrameratePayload,
     responses(
         (status = 200, description = "Framerate updated successfully", body = Object),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
-        (status = 500, description = "Database error", body = String)
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -70,9 +69,9 @@ pub async fn update_framerate(
     path = "/api/settings/framerate",
     responses(
         (status = 200, description = "Current processing framerate", body = UpdateFrameratePayload),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
-        (status = 500, description = "Database error", body = String)
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -93,10 +92,10 @@ pub async fn get_framerate(
     request_body = UpdateRTSPUrlPayload,
     responses(
         (status = 200, description = "RTSP URL updated successfully", body = Object),
-        (status = 400, description = "Invalid or unreachable RTSP URL", body = String),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
-        (status = 500, description = "Database or Internal Error", body = String)
+        (status = 400, description = "Invalid or unreachable RTSP URL", body = AppErrorResponse),
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Database or Internal Error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -118,10 +117,8 @@ pub async fn update_rtsp_url(
             .map_err(|e| AppError::bad_request(format!("RTSP Validation Failed: {}", e)))?;
     }
 
-    // 2. Save to DB if validation succeeded
     update_db_setting(&state.db, "rtsp_url", payload.rtsp_url.clone()).await?;
 
-    // 3. Update background pipeline config
     state.pipeline_config_tx.send_modify(|config| {
         config.rtsp_url = payload.rtsp_url.clone();
     });
@@ -136,9 +133,9 @@ pub async fn update_rtsp_url(
     path = "/api/settings/rtsp_url",
     responses(
         (status = 200, description = "Current RTSP URL", body = UpdateRTSPUrlPayload),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
-        (status = 500, description = "Database error", body = String)
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -159,9 +156,9 @@ pub async fn get_rtsp_url(
     request_body = UpdateTrimSnapshotsPayload,
     responses(
         (status = 200, description = "Snapshot MB trim limit updated successfully", body = Object),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
-        (status = 500, description = "Database error", body = String)
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -194,9 +191,9 @@ pub async fn update_trim_snapshots(
     path = "/api/settings/trim_snapshots",
     responses(
         (status = 200, description = "Current snapshot MB trim limit", body = UpdateTrimSnapshotsPayload),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
-        (status = 500, description = "Database error", body = String)
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -217,9 +214,9 @@ pub async fn get_trim_snapshots(
     request_body = UpdateTrimHistoryPayload,
     responses(
         (status = 200, description = "History days trim limit updated successfully", body = Object),
-        (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
-        (status = 500, description = "Database error", body = String)
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -253,8 +250,8 @@ pub async fn update_trim_history(
     responses(
         (status = 200, description = "Current history days trim limit", body = UpdateTrimHistoryPayload),
         (status = 401, description = "Unauthorized"),
-        (status = 403, description = "Forbidden (Admin only)"),
-        (status = 500, description = "Database error", body = String)
+        (status = 403, description = "Forbidden (Admin only)", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])

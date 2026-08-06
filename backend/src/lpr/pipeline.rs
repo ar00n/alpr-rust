@@ -46,9 +46,6 @@ impl LprPipeline {
         for bbox in &bboxes {
             if let Some(processed_crop) = utils::prepare_ocr_crop(&img, bbox) {
                 if let Ok((text, confidence)) = self.recognizer.recognize(&processed_crop) {
-                    
-                    // 1. Remove non-alphanumeric chars (spaces, hyphens, linebreaks)
-                    // 2. Capitalize everything
                     let cleaned: String = text
                         .chars()
                         .filter(|c| c.is_alphanumeric())

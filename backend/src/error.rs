@@ -3,6 +3,11 @@ use std::borrow::Cow;
 use axum::response::IntoResponse;
 use reqwest::StatusCode;
 
+#[derive(utoipa::ToSchema)]
+pub struct AppErrorResponse {
+    error: String,
+}
+
 #[derive(Debug)]
 pub struct AppError {
     pub status: StatusCode,

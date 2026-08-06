@@ -3,7 +3,7 @@ use reqwest::{Method, Url};
 use std::net::IpAddr;
 
 use crate::{
-    actions::{execute_action, is_ip_allowed}, crypto::encrypt_data, error::AppError, models::{CreateCustomAction, CustomActionResponse, TestActionResponse, User}, state::AppState
+    actions::{execute_action, is_ip_allowed}, crypto::encrypt_data, error::{AppError, AppErrorResponse}, models::{CreateCustomAction, CustomActionResponse, TestActionResponse, User}, state::AppState
 };
 
 #[utoipa::path(
@@ -12,9 +12,9 @@ use crate::{
     request_body = CreateCustomAction,
     responses(
         (status = 200, description = "Custom action created successfully", body = CustomActionResponse),
-        (status = 400, description = "Invalid input"),
-        (status = 401, description = "Unauthorized"),
-        (status = 500, description = "Database error")
+        (status = 400, description = "Invalid input", body = AppErrorResponse),
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(("bearer_auth" = [])),
     tag = "Custom Actions"
@@ -24,8 +24,6 @@ pub async fn add_custom_action(
     Extension(_user): Extension<User>,
     Json(payload): Json<CreateCustomAction>,
 ) -> Result<Json<CustomActionResponse>, AppError> {
-    
-    // --- VALIDATION ---
     let url = Url::parse(&payload.url).map_err(|_| AppError::bad_request("Invalid URL format"))?;
     
     if let Some(host_str) = url.host_str() {
@@ -53,7 +51,6 @@ pub async fn add_custom_action(
 
     let headers_str = payload.headers.as_ref().map(|v| v.to_string());
 
-    // --- DATABASE INSERT ---
     let action_id = sqlx::query_scalar!(
         r#"
         INSERT INTO custom_actions (
@@ -66,7 +63,7 @@ pub async fn add_custom_action(
         payload.method,
         payload.url,
         payload.auth_type,
-        auth_data_str, // Storing the encrypted Base64 string
+        auth_data_str,
         headers_str,
         payload.body_template
     )
@@ -90,8 +87,8 @@ pub async fn add_custom_action(
     request_body = CreateCustomAction,
     responses(
         (status = 200, description = "Action executed successfully", body = TestActionResponse),
-        (status = 400, description = "Invalid input or Execution failed"),
-        (status = 401, description = "Unauthorized")
+        (status = 400, description = "Invalid input or Execution failed", body = AppErrorResponse),
+        (status = 401, description = "Unauthorized", body = AppErrorResponse)
     ),
     security(("bearer_auth" = [])),
     tag = "Custom Actions"
@@ -100,7 +97,6 @@ pub async fn test_custom_action(
     Extension(_user): Extension<User>,
     Json(payload): Json<CreateCustomAction>,
 ) -> Result<Json<TestActionResponse>, AppError> {
-    // We execute the payload using a dummy licence plate for testing purposes
     let (status, body) = execute_action(
         &payload.url,
         &payload.method,
@@ -119,7 +115,7 @@ pub async fn test_custom_action(
     path = "/api/custom-actions",
     responses(
         (status = 200, description = "Retrieved list of custom actions", body = [CustomActionResponse]),
-        (status = 401, description = "Unauthorized")
+        (status = 401, description = "Unauthorized", body = AppErrorResponse)
     ),
     security(("bearer_auth" = [])),
     tag = "Custom Actions"
@@ -138,11 +134,10 @@ pub async fn get_custom_actions(
     .await?;
 
     let actions = records.into_iter().map(|rec| {
-        // Parse headers back into JSON value if it exists
         let headers_val = rec.headers.and_then(|h| serde_json::from_str(&h).ok());
         
         CustomActionResponse {
-            id: rec.id, // Assuming id is i64 or adjusts based on your struct
+            id: rec.id,
             name: rec.name,
             method: rec.method,
             url: rec.url,
@@ -163,8 +158,8 @@ pub async fn get_custom_actions(
     ),
     responses(
         (status = 200, description = "Custom action deleted successfully"),
-        (status = 401, description = "Unauthorized"),
-        (status = 500, description = "Database error")
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(("bearer_auth" = [])),
     tag = "Custom Actions"

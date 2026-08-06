@@ -6,7 +6,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 
 use crate::{
-    error::AppError, models::{AllowListEntry, User}, state::AppState,
+    error::{AppError, AppErrorResponse}, models::{AllowListEntry, User}, state::AppState,
 };
 
 #[utoipa::path(
@@ -15,8 +15,8 @@ use crate::{
     request_body = AllowListEntry,
     responses(
         (status = 200, description = "Plate added or updated in allow list", body = AllowListEntry),
-        (status = 401, description = "Unauthorized"),
-        (status = 500, description = "Database error", body = String)
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -48,8 +48,8 @@ pub async fn add_allow_list(
     path = "/api/allow-list",
     responses(
         (status = 200, description = "List of allow-listed plates", body = [AllowListEntry]),
-        (status = 401, description = "Unauthorized"),
-        (status = 500, description = "Database error", body = String)
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])
@@ -79,9 +79,9 @@ pub async fn get_allow_list(
     ),
     responses(
         (status = 204, description = "Plate successfully deleted"),
-        (status = 404, description = "Plate not found in the allow list"),
-        (status = 401, description = "Unauthorized"),
-        (status = 500, description = "Database error", body = String)
+        (status = 404, description = "Plate not found in the allow list", body = AppErrorResponse),
+        (status = 401, description = "Unauthorized", body = AppErrorResponse),
+        (status = 500, description = "Database error", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])

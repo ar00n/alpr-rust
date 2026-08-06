@@ -15,17 +15,16 @@ import {
   useTestCustomAction,
   useDeleteCustomAction
 } from '@/lib/rust_api/schema';
+import { getErrorMessage } from '../main';
 
 export default function CustomActions() {
   const queryClient = useQueryClient();
 
-  // Queries & Mutations
   const { data: actions, isLoading: isLoadingActions } = useGetCustomActions();
   const addActionMutation = useAddCustomAction();
   const testActionMutation = useTestCustomAction();
   const deleteActionMutation = useDeleteCustomAction();
 
-  // Form State
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [method, setMethod] = useState('POST');
@@ -34,7 +33,6 @@ export default function CustomActions() {
   const [authUsername, setAuthUsername] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   
-  // API Key State
   const [apiKeyName, setApiKeyName] = useState('X-API-Key');
   const [apiKeyValue, setApiKeyValue] = useState('');
   const [apiKeyPlacement, setApiKeyPlacement] = useState<'header' | 'query'>('header');
@@ -42,7 +40,6 @@ export default function CustomActions() {
   const [headersStr, setHeadersStr] = useState('{\n  "Content-Type": "application/json"\n}');
   const [bodyTemplate, setBodyTemplate] = useState('{\n  "plate": "${LICENCE_PLATE}"\n}');
 
-  // UI State
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ status: number; body: string } | null>(null);
@@ -97,7 +94,7 @@ export default function CustomActions() {
       });
       setSuccess("Test executed successfully. Check the response below.");
     } catch (err: any) {
-      setError(err?.message || err?.response?.data || "Failed to test action.");
+      setError(getErrorMessage(err) || "Failed to test action.");
     }
   };
 
@@ -116,7 +113,6 @@ export default function CustomActions() {
       queryClient.invalidateQueries({ queryKey: getGetCustomActionsQueryKey() });
       setSuccess("Custom action saved successfully!");
       
-      // Reset Form
       setName('');
       setUrl('');
       setAuthType('NONE');

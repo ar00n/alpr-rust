@@ -34,7 +34,7 @@ import { RtspSetupModal } from './components/RtspSetupModal';
 import CustomActions from './components/CustomActions';
 
 export default function App() {
-  const { isAdmin, logout } = useAuthStore();
+  const { isAdmin, logout, token } = useAuthStore();
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<'Connected' | 'Disconnected' | 'Error' | 'Reconnecting'>('Disconnected');
 
@@ -86,9 +86,18 @@ export default function App() {
 
     const connect = () => {
       if (isUnmounted) return;
+      
+      if (!token) {
+        console.error('Cannot connect to WebSocket: No authentication token found.');
+        setStatus('Error');
+        return;
+      }
 
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${wsProtocol}//${window.location.hostname}:${window.location.port}/api/ws`;
+      
+      // 2. Append the token as a query parameter (encodeURIComponent ensures safety)
+      const wsUrl = `${wsProtocol}//${window.location.hostname}:${window.location.port}/api/ws?token=${encodeURIComponent(token)}`;
+      
       ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
@@ -151,7 +160,7 @@ export default function App() {
         ws.close();
       }
     };
-  }, [queryClient]);
+  }, [queryClient, token]);
 
   return (
     <div className="container mx-auto px-4 py-4 sm:px-6 sm:py-8 space-y-4 sm:space-y-8 max-w-7xl">

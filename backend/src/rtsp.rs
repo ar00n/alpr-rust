@@ -1,10 +1,9 @@
-use std::sync::Arc;
-use std::time::Duration;
-
+use futures::stream::StreamExt; // Required for bus_stream.next()
 use gstreamer::prelude::*;
 use gstreamer_app::AppSink;
 use gstreamer_pbutils::Discoverer;
-use tokio::sync::{broadcast::{self, error::TryRecvError}, watch};
+use tokio::sync::{broadcast, watch};
+use std::time::Duration;
 
 use crate::models::{PipelineConfig, VideoFrame};
 
@@ -20,48 +19,29 @@ pub fn validate_rtsp_url(url: &str, timeout_secs: u64) -> Result<(), String> {
     }
 }
 
-fn is_shutdown(rx: &mut broadcast::Receiver<()>) -> bool {
-    match rx.try_recv() {
-        Ok(()) | Err(TryRecvError::Closed) | Err(TryRecvError::Lagged(_)) => true,
-        Err(TryRecvError::Empty) => false,
-    }
-}
-
-fn interruptible_sleep(duration: Duration, rx: &mut broadcast::Receiver<()>) -> bool {
-    let step = Duration::from_millis(50);
-    let mut elapsed = Duration::from_millis(0);
-    while elapsed < duration {
-        if is_shutdown(rx) {
-            return true;
-        }
-        std::thread::sleep(step);
-        elapsed += step;
-    }
-    is_shutdown(rx)
-}
-
-pub fn start_rtsp_ingest(
-    tx: broadcast::Sender<axum::body::Bytes>,
+pub async fn start_rtsp_ingest(
+    tx: broadcast::Sender<Option<axum::body::Bytes>>,
     pipeline_tx: watch::Sender<Option<VideoFrame>>,
-    config_rx: watch::Receiver<PipelineConfig>,
+    mut config_rx: watch::Receiver<PipelineConfig>,
     mut shutdown_rx: broadcast::Receiver<()>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     gstreamer::init()?;
 
     loop {
-        if is_shutdown(&mut shutdown_rx) {
-            tracing::info!("RTSP ingest received shutdown signal. Exiting...");
-            return Ok(());
-        }
-
-        let rtsp_url = match config_rx.borrow().rtsp_url.clone() {
-            Some(url) => url,
-            None => {
-                if interruptible_sleep(Duration::from_secs(1), &mut shutdown_rx) {
-                    tracing::info!("RTSP ingest shutting down while waiting for RTSP URL.");
+        let rtsp_url = loop {
+            if let Some(url) = config_rx.borrow().rtsp_url.clone() {
+                break url;
+            }
+            
+            tokio::select! {
+                _ = shutdown_rx.recv() => {
+                    tracing::info!("RTSP ingest shutting down...");
+                    let _ = pipeline_tx.send(None);
                     return Ok(());
                 }
-                continue;
+                res = config_rx.changed() => {
+                    if res.is_err() { return Ok(()); }
+                }
             }
         };
 
@@ -75,60 +55,22 @@ pub fn start_rtsp_ingest(
         );
 
         let pipeline = match gstreamer::parse::launch(&pipeline_str) {
-            Ok(p) => p
-                .downcast::<gstreamer::Pipeline>()
-                .expect("Expected a gst::Pipeline"),
+            Ok(p) => p.downcast::<gstreamer::Pipeline>().unwrap(),
             Err(e) => {
                 tracing::error!("Failed to launch pipeline: {}. Retrying in 1s...", e);
-                if interruptible_sleep(Duration::from_secs(1), &mut shutdown_rx) {
-                    return Ok(());
+                let _ = pipeline_tx.send(None);
+                tokio::select! {
+                    _ = tokio::time::sleep(Duration::from_secs(1)) => continue,
+                    _ = shutdown_rx.recv() => return Ok(()),
                 }
-                continue;
             }
         };
 
         let rate_limiter = pipeline.by_name("rate_limiter").unwrap();
-
-        let initial_fps = config_rx.borrow().fps;
-        rate_limiter.set_property("max-rate", initial_fps as i32);
-
-        let mut config_rx_bg = config_rx.clone();
-        let mut shutdown_rx_bg = shutdown_rx.resubscribe();
-        let rate_limiter_clone = rate_limiter.clone();
-        let pipeline_clone = pipeline.clone();
-        let current_rtsp_url = rtsp_url.clone();
-
-        let bg_task = tokio::spawn(async move {
-            let mut previous_fps = config_rx_bg.borrow().fps;
-
-            loop {
-                tokio::select! {
-                    res = config_rx_bg.changed() => {
-                        if res.is_err() {
-                            break;
-                        }
-                        let config = config_rx_bg.borrow();
-
-                        if config.rtsp_url != Some(current_rtsp_url.clone()) {
-                            tracing::info!("RTSP URL changed. Sending EOS to cleanly restart pipeline...");
-                            let _ = pipeline_clone.send_event(gstreamer::event::Eos::new());
-                            break;
-                        }
-
-                        let new_fps = config.fps;
-                        if new_fps != previous_fps {
-                            tracing::info!("Updating GStreamer FPS limit to: {}", new_fps);
-                            rate_limiter_clone.set_property("max-rate", new_fps as i32);
-                            previous_fps = new_fps;
-                        }
-                    }
-
-                    _ = shutdown_rx_bg.recv() => {
-                        break;
-                    }
-                }
-            }
-        });
+        let mut previous_fps = config_rx.borrow().fps;
+        
+        // Clamp fps to a minimum of 1 to prevent GLib panics
+        rate_limiter.set_property("max-rate", previous_fps.max(1) as i32);
 
         let browser_sink = pipeline.by_name("browser_sink").unwrap();
         let browser_appsink = browser_sink.downcast::<AppSink>().unwrap();
@@ -152,7 +94,7 @@ pub fn start_rtsp_ingest(
                         .map_err(|_| gstreamer::FlowError::Error)?;
 
                     let bytes = axum::body::Bytes::copy_from_slice(map.as_slice());
-                    let _ = tx_clone.send(bytes);
+                    let _ = tx_clone.send(Some(bytes));
 
                     Ok(gstreamer::FlowSuccess::Ok)
                 })
@@ -177,9 +119,6 @@ pub fn start_rtsp_ingest(
 
                     let caps = sample.caps().ok_or(gstreamer::FlowError::Error)?;
                     let buffer = sample.buffer().ok_or(gstreamer::FlowError::Error)?;
-                    let map = buffer
-                        .map_readable()
-                        .map_err(|_| gstreamer::FlowError::Error)?;
 
                     let s = caps.structure(0).ok_or(gstreamer::FlowError::Error)?;
                     let width = s
@@ -190,7 +129,7 @@ pub fn start_rtsp_ingest(
                         .map_err(|_| gstreamer::FlowError::Error)? as i64;
 
                     let frame = VideoFrame {
-                        data: Arc::from(map.as_slice()),
+                        buffer: buffer.to_owned(),
                         width: width as u32,
                         height: height as u32,
                     };
@@ -204,55 +143,89 @@ pub fn start_rtsp_ingest(
 
         if let Err(err) = pipeline.set_state(gstreamer::State::Playing) {
             tracing::error!("Failed to set pipeline to Playing: {}. Retrying...", err);
-            let _ = pipeline.set_state(gstreamer::State::Null);
-            bg_task.abort();
-            if interruptible_sleep(Duration::from_secs(1), &mut shutdown_rx) {
-                return Ok(());
+            stop_pipeline(&pipeline, &pipeline_tx);
+            tokio::select! {
+                _ = tokio::time::sleep(Duration::from_secs(1)) => continue,
+                _ = shutdown_rx.recv() => return Ok(()),
             }
-            continue;
         }
-
-        tracing::debug!("GStreamer pipeline started for {}", rtsp_url);
 
         let bus = pipeline.bus().unwrap();
+        let mut bus_stream = bus.stream(); // Create an async Stream of Gstreamer messages
 
+        // 2. The unified main async event loop
         loop {
-            if is_shutdown(&mut shutdown_rx) {
-                tracing::info!("🛑 RTSP ingest received shutdown signal. Stopping pipeline...");
-                let _ = pipeline.send_event(gstreamer::event::Eos::new());
-                let _ = pipeline.set_state(gstreamer::State::Null);
-                bg_task.abort();
-                return Ok(());
-            }
+            tokio::select! {
+                // Event A: Gstreamer Bus Messages
+                msg = bus_stream.next() => {
+                    let Some(msg) = msg else { break };
+                    match msg.view() {
+                        gstreamer::MessageView::Error(err) => {
+                            tracing::error!("GStreamer error: {} ({:?})", err.error(), err.debug());
+                            break;
+                        }
+                        gstreamer::MessageView::Eos(..) => {
+                            tracing::info!("GStreamer End of Stream");
+                            break;
+                        }
+                        _ => (),
+                    }
+                }
 
-            if let Some(msg) = bus.timed_pop(gstreamer::ClockTime::from_mseconds(250)) {
-                use gstreamer::MessageView;
-                match msg.view() {
-                    MessageView::Error(err) => {
-                        tracing::error!("GStreamer error: {} ({:?})", err.error(), err.debug());
-                        break; // Break the bus loop to restart the pipeline
+                // Event B: Config Changes
+                res = config_rx.changed() => {
+                    if res.is_err() { break; } // Channel closed
+                    let config = config_rx.borrow();
+
+                    if config.rtsp_url != Some(rtsp_url.clone()) {
+                        tracing::info!("RTSP URL changed. Signalling pipeline restart...");
+                        break;
                     }
-                    MessageView::Eos(..) => {
-                        tracing::info!("GStreamer End of Stream");
-                        break; // Break the bus loop to restart the pipeline
+
+                    if config.fps != previous_fps {
+                        tracing::info!("Updating GStreamer FPS limit to: {}", config.fps);
+                        // Prevent panic by ensuring max-rate >= 1
+                        rate_limiter.set_property("max-rate", config.fps.max(1) as i32);
+                        previous_fps = config.fps;
                     }
-                    _ => (),
+                }
+
+                // Event C: App Shutdown
+                _ = shutdown_rx.recv() => {
+                    tracing::info!("🛑 RTSP ingest received shutdown signal. Stopping pipeline...");
+                    let _ = tx.send(None); 
+                    stop_pipeline(&pipeline, &pipeline_tx);
+                    return Ok(());
                 }
             }
-
-            if config_rx.borrow().rtsp_url != Some(rtsp_url.clone()) {
-                tracing::info!("RTSP URL change detected in bus loop. Restarting pipeline...");
-                break;
-            }
         }
 
-        tracing::warn!("Stream ended/failed. Cleaning up and restarting...");
-        let _ = pipeline.set_state(gstreamer::State::Null);
-        bg_task.abort();
+        tracing::warn!("Stream ended/failed or config changed. Cleaning up...");
+        stop_pipeline(&pipeline, &pipeline_tx);
 
-        if interruptible_sleep(Duration::from_secs(1), &mut shutdown_rx) {
-            tracing::info!("RTSP ingest received shutdown signal during retry sleep. Exiting...");
-            return Ok(());
+        tokio::select! {
+            _ = tokio::time::sleep(Duration::from_secs(1)) => continue,
+            _ = shutdown_rx.recv() => return Ok(()),
         }
     }
+}
+
+// Updated Stop Helper
+fn stop_pipeline(
+    pipeline: &gstreamer::Pipeline,
+    pipeline_tx: &watch::Sender<Option<VideoFrame>>,
+) {
+    if let Some(browser_sink) = pipeline.by_name("browser_sink") {
+        if let Ok(browser_appsink) = browser_sink.downcast::<AppSink>() {
+            browser_appsink.set_callbacks(gstreamer_app::AppSinkCallbacks::builder().build());
+        }
+    }
+    if let Some(rust_sink) = pipeline.by_name("rust_sink") {
+        if let Ok(rust_appsink) = rust_sink.downcast::<AppSink>() {
+            rust_appsink.set_callbacks(gstreamer_app::AppSinkCallbacks::builder().build());
+        }
+    }
+
+    let _ = pipeline.set_state(gstreamer::State::Null);
+    let _ = pipeline_tx.send(None);
 }

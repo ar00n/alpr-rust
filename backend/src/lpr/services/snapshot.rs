@@ -7,7 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub async fn save(frame: &VideoFrame, plate: &str, snapshot_dir: &str) -> Option<String> {
     let width = frame.width;
     let height = frame.height;
-    let data = frame.data.clone();
+    let buffer = frame.buffer.clone();
     let plate_string = plate.to_string();
     let snapshot_dir = snapshot_dir.to_string();
 
@@ -19,7 +19,8 @@ pub async fn save(frame: &VideoFrame, plate: &str, snapshot_dir: &str) -> Option
             
         let filepath = format!("{snapshot_dir}/{}_{}.webp", plate_string, timestamp);
 
-        let img_buf = ImageBuffer::<Rgb<u8>, Vec<u8>>::from_raw(width, height, data.to_vec())?;
+        let map = buffer.map_readable().ok()?;
+        let img_buf = ImageBuffer::<Rgb<u8>, Vec<u8>>::from_raw(width, height, map.as_slice().to_vec())?;
         let dynamic_img = DynamicImage::ImageRgb8(img_buf);
 
         // Range: 0.0 (max compression / lowest quality) to 100.0 (best quality)

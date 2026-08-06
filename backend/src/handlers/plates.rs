@@ -7,8 +7,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    models::{PlateRead, User},
-    state::AppState,
+    error::AppErrorResponse, models::{PlateRead, User}, state::AppState,
 };
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]
@@ -36,7 +35,7 @@ pub struct PaginatedHistoryResponse {
     ),
     responses(
         (status = 200, description = "Paginated list of plate reads", body = PaginatedHistoryResponse),
-        (status = 401, description = "Unauthorized")
+        (status = 401, description = "Unauthorized", body = AppErrorResponse)
     ),
     security(
         ("bearer_auth" = [])

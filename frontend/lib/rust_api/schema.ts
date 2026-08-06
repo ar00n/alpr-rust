@@ -30,6 +30,10 @@ export interface AllowListEntry {
   plate: string;
 }
 
+export interface AppErrorResponse {
+  error: string;
+}
+
 export interface ChangePasswordPayload {
   new_password: string;
 }
@@ -153,6 +157,13 @@ export type UpdateTrimHistory200 = { [key: string]: unknown };
 
 export type UpdateTrimSnapshots200 = { [key: string]: unknown };
 
+export type WebsocketHandlerParams = {
+/**
+ * JWT Bearer Token for WebSocket Auth
+ */
+token: string;
+};
+
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
@@ -194,7 +205,7 @@ export const getGetAllowListQueryKey = () => {
     }
 
 
-export const getGetAllowListQueryOptions = <TData = Awaited<ReturnType<typeof getAllowList>>, TError = void | string>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllowList>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getGetAllowListQueryOptions = <TData = Awaited<ReturnType<typeof getAllowList>>, TError = AppErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllowList>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -213,10 +224,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetAllowListQueryResult = NonNullable<Awaited<ReturnType<typeof getAllowList>>>
-export type GetAllowListQueryError = void | string
+export type GetAllowListQueryError = AppErrorResponse
 
 
-export function useGetAllowList<TData = Awaited<ReturnType<typeof getAllowList>>, TError = void | string>(
+export function useGetAllowList<TData = Awaited<ReturnType<typeof getAllowList>>, TError = AppErrorResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllowList>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllowList>>,
@@ -226,7 +237,7 @@ export function useGetAllowList<TData = Awaited<ReturnType<typeof getAllowList>>
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllowList<TData = Awaited<ReturnType<typeof getAllowList>>, TError = void | string>(
+export function useGetAllowList<TData = Awaited<ReturnType<typeof getAllowList>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllowList>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getAllowList>>,
@@ -236,12 +247,12 @@ export function useGetAllowList<TData = Awaited<ReturnType<typeof getAllowList>>
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetAllowList<TData = Awaited<ReturnType<typeof getAllowList>>, TError = void | string>(
+export function useGetAllowList<TData = Awaited<ReturnType<typeof getAllowList>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllowList>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGetAllowList<TData = Awaited<ReturnType<typeof getAllowList>>, TError = void | string>(
+export function useGetAllowList<TData = Awaited<ReturnType<typeof getAllowList>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getAllowList>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -276,7 +287,7 @@ export const addAllowList = (
 
 
 
-export const getAddAllowListMutationOptions = <TError = void | string,
+export const getAddAllowListMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addAllowList>>, TError,{data: AllowListEntry}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof addAllowList>>, TError,{data: AllowListEntry}, TContext> => {
 
@@ -305,9 +316,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AddAllowListMutationResult = NonNullable<Awaited<ReturnType<typeof addAllowList>>>
     export type AddAllowListMutationBody = AllowListEntry
-    export type AddAllowListMutationError = void | string
+    export type AddAllowListMutationError = AppErrorResponse
 
-    export const useAddAllowList = <TError = void | string,
+    export const useAddAllowList = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addAllowList>>, TError,{data: AllowListEntry}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof addAllowList>>,
@@ -333,7 +344,7 @@ export const deleteAllowList = (
 
 
 
-export const getDeleteAllowListMutationOptions = <TError = void | string,
+export const getDeleteAllowListMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAllowList>>, TError,{plate: string}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteAllowList>>, TError,{plate: string}, TContext> => {
 
@@ -362,9 +373,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteAllowListMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAllowList>>>
 
-    export type DeleteAllowListMutationError = void | string
+    export type DeleteAllowListMutationError = AppErrorResponse
 
-    export const useDeleteAllowList = <TError = void | string,
+    export const useDeleteAllowList = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAllowList>>, TError,{plate: string}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteAllowList>>,
@@ -456,7 +467,7 @@ export const getGetCustomActionsQueryKey = () => {
     }
 
 
-export const getGetCustomActionsQueryOptions = <TData = Awaited<ReturnType<typeof getCustomActions>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getGetCustomActionsQueryOptions = <TData = Awaited<ReturnType<typeof getCustomActions>>, TError = AppErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -475,10 +486,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetCustomActionsQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomActions>>>
-export type GetCustomActionsQueryError = void
+export type GetCustomActionsQueryError = AppErrorResponse
 
 
-export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = void>(
+export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = AppErrorResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCustomActions>>,
@@ -488,7 +499,7 @@ export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomA
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = void>(
+export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getCustomActions>>,
@@ -498,12 +509,12 @@ export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomA
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = void>(
+export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = void>(
+export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -538,7 +549,7 @@ export const addCustomAction = (
 
 
 
-export const getAddCustomActionMutationOptions = <TError = void,
+export const getAddCustomActionMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCustomAction>>, TError,{data: CreateCustomAction}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof addCustomAction>>, TError,{data: CreateCustomAction}, TContext> => {
 
@@ -567,9 +578,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type AddCustomActionMutationResult = NonNullable<Awaited<ReturnType<typeof addCustomAction>>>
     export type AddCustomActionMutationBody = CreateCustomAction
-    export type AddCustomActionMutationError = void
+    export type AddCustomActionMutationError = AppErrorResponse
 
-    export const useAddCustomAction = <TError = void,
+    export const useAddCustomAction = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCustomAction>>, TError,{data: CreateCustomAction}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof addCustomAction>>,
@@ -597,7 +608,7 @@ export const testCustomAction = (
 
 
 
-export const getTestCustomActionMutationOptions = <TError = void,
+export const getTestCustomActionMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testCustomAction>>, TError,{data: CreateCustomAction}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof testCustomAction>>, TError,{data: CreateCustomAction}, TContext> => {
 
@@ -626,9 +637,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type TestCustomActionMutationResult = NonNullable<Awaited<ReturnType<typeof testCustomAction>>>
     export type TestCustomActionMutationBody = CreateCustomAction
-    export type TestCustomActionMutationError = void
+    export type TestCustomActionMutationError = AppErrorResponse
 
-    export const useTestCustomAction = <TError = void,
+    export const useTestCustomAction = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testCustomAction>>, TError,{data: CreateCustomAction}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof testCustomAction>>,
@@ -654,7 +665,7 @@ export const deleteCustomAction = (
 
 
 
-export const getDeleteCustomActionMutationOptions = <TError = void,
+export const getDeleteCustomActionMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCustomAction>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteCustomAction>>, TError,{id: number}, TContext> => {
 
@@ -683,9 +694,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteCustomActionMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCustomAction>>>
 
-    export type DeleteCustomActionMutationError = void
+    export type DeleteCustomActionMutationError = AppErrorResponse
 
-    export const useDeleteCustomAction = <TError = void,
+    export const useDeleteCustomAction = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCustomAction>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteCustomAction>>,
@@ -719,7 +730,7 @@ export const getGetHistoryHandlerQueryKey = (params?: GetHistoryHandlerParams,) 
     }
 
 
-export const getGetHistoryHandlerQueryOptions = <TData = Awaited<ReturnType<typeof getHistoryHandler>>, TError = void>(params?: GetHistoryHandlerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getGetHistoryHandlerQueryOptions = <TData = Awaited<ReturnType<typeof getHistoryHandler>>, TError = AppErrorResponse>(params?: GetHistoryHandlerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -738,10 +749,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetHistoryHandlerQueryResult = NonNullable<Awaited<ReturnType<typeof getHistoryHandler>>>
-export type GetHistoryHandlerQueryError = void
+export type GetHistoryHandlerQueryError = AppErrorResponse
 
 
-export function useGetHistoryHandler<TData = Awaited<ReturnType<typeof getHistoryHandler>>, TError = void>(
+export function useGetHistoryHandler<TData = Awaited<ReturnType<typeof getHistoryHandler>>, TError = AppErrorResponse>(
  params: undefined |  GetHistoryHandlerParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryHandler>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHistoryHandler>>,
@@ -751,7 +762,7 @@ export function useGetHistoryHandler<TData = Awaited<ReturnType<typeof getHistor
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetHistoryHandler<TData = Awaited<ReturnType<typeof getHistoryHandler>>, TError = void>(
+export function useGetHistoryHandler<TData = Awaited<ReturnType<typeof getHistoryHandler>>, TError = AppErrorResponse>(
  params?: GetHistoryHandlerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryHandler>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getHistoryHandler>>,
@@ -761,12 +772,12 @@ export function useGetHistoryHandler<TData = Awaited<ReturnType<typeof getHistor
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetHistoryHandler<TData = Awaited<ReturnType<typeof getHistoryHandler>>, TError = void>(
+export function useGetHistoryHandler<TData = Awaited<ReturnType<typeof getHistoryHandler>>, TError = AppErrorResponse>(
  params?: GetHistoryHandlerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGetHistoryHandler<TData = Awaited<ReturnType<typeof getHistoryHandler>>, TError = void>(
+export function useGetHistoryHandler<TData = Awaited<ReturnType<typeof getHistoryHandler>>, TError = AppErrorResponse>(
  params?: GetHistoryHandlerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoryHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -806,7 +817,7 @@ export const getGetFramerateQueryKey = () => {
     }
 
 
-export const getGetFramerateQueryOptions = <TData = Awaited<ReturnType<typeof getFramerate>>, TError = void | string>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFramerate>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getGetFramerateQueryOptions = <TData = Awaited<ReturnType<typeof getFramerate>>, TError = AppErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFramerate>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -825,10 +836,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetFramerateQueryResult = NonNullable<Awaited<ReturnType<typeof getFramerate>>>
-export type GetFramerateQueryError = void | string
+export type GetFramerateQueryError = AppErrorResponse
 
 
-export function useGetFramerate<TData = Awaited<ReturnType<typeof getFramerate>>, TError = void | string>(
+export function useGetFramerate<TData = Awaited<ReturnType<typeof getFramerate>>, TError = AppErrorResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFramerate>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getFramerate>>,
@@ -838,7 +849,7 @@ export function useGetFramerate<TData = Awaited<ReturnType<typeof getFramerate>>
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetFramerate<TData = Awaited<ReturnType<typeof getFramerate>>, TError = void | string>(
+export function useGetFramerate<TData = Awaited<ReturnType<typeof getFramerate>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFramerate>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getFramerate>>,
@@ -848,12 +859,12 @@ export function useGetFramerate<TData = Awaited<ReturnType<typeof getFramerate>>
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetFramerate<TData = Awaited<ReturnType<typeof getFramerate>>, TError = void | string>(
+export function useGetFramerate<TData = Awaited<ReturnType<typeof getFramerate>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFramerate>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGetFramerate<TData = Awaited<ReturnType<typeof getFramerate>>, TError = void | string>(
+export function useGetFramerate<TData = Awaited<ReturnType<typeof getFramerate>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFramerate>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -888,7 +899,7 @@ export const updateFramerate = (
 
 
 
-export const getUpdateFramerateMutationOptions = <TError = void | string,
+export const getUpdateFramerateMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFramerate>>, TError,{data: UpdateFrameratePayload}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateFramerate>>, TError,{data: UpdateFrameratePayload}, TContext> => {
 
@@ -917,9 +928,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateFramerateMutationResult = NonNullable<Awaited<ReturnType<typeof updateFramerate>>>
     export type UpdateFramerateMutationBody = UpdateFrameratePayload
-    export type UpdateFramerateMutationError = void | string
+    export type UpdateFramerateMutationError = AppErrorResponse
 
-    export const useUpdateFramerate = <TError = void | string,
+    export const useUpdateFramerate = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateFramerate>>, TError,{data: UpdateFrameratePayload}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateFramerate>>,
@@ -952,7 +963,7 @@ export const getGetRtspUrlQueryKey = () => {
     }
 
 
-export const getGetRtspUrlQueryOptions = <TData = Awaited<ReturnType<typeof getRtspUrl>>, TError = void | string>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRtspUrl>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getGetRtspUrlQueryOptions = <TData = Awaited<ReturnType<typeof getRtspUrl>>, TError = AppErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRtspUrl>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -971,10 +982,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetRtspUrlQueryResult = NonNullable<Awaited<ReturnType<typeof getRtspUrl>>>
-export type GetRtspUrlQueryError = void | string
+export type GetRtspUrlQueryError = AppErrorResponse
 
 
-export function useGetRtspUrl<TData = Awaited<ReturnType<typeof getRtspUrl>>, TError = void | string>(
+export function useGetRtspUrl<TData = Awaited<ReturnType<typeof getRtspUrl>>, TError = AppErrorResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRtspUrl>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRtspUrl>>,
@@ -984,7 +995,7 @@ export function useGetRtspUrl<TData = Awaited<ReturnType<typeof getRtspUrl>>, TE
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRtspUrl<TData = Awaited<ReturnType<typeof getRtspUrl>>, TError = void | string>(
+export function useGetRtspUrl<TData = Awaited<ReturnType<typeof getRtspUrl>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRtspUrl>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getRtspUrl>>,
@@ -994,12 +1005,12 @@ export function useGetRtspUrl<TData = Awaited<ReturnType<typeof getRtspUrl>>, TE
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetRtspUrl<TData = Awaited<ReturnType<typeof getRtspUrl>>, TError = void | string>(
+export function useGetRtspUrl<TData = Awaited<ReturnType<typeof getRtspUrl>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRtspUrl>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGetRtspUrl<TData = Awaited<ReturnType<typeof getRtspUrl>>, TError = void | string>(
+export function useGetRtspUrl<TData = Awaited<ReturnType<typeof getRtspUrl>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRtspUrl>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1034,7 +1045,7 @@ export const updateRtspUrl = (
 
 
 
-export const getUpdateRtspUrlMutationOptions = <TError = string | void,
+export const getUpdateRtspUrlMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRtspUrl>>, TError,{data: UpdateRTSPUrlPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateRtspUrl>>, TError,{data: UpdateRTSPUrlPayload}, TContext> => {
 
@@ -1063,9 +1074,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateRtspUrlMutationResult = NonNullable<Awaited<ReturnType<typeof updateRtspUrl>>>
     export type UpdateRtspUrlMutationBody = UpdateRTSPUrlPayload
-    export type UpdateRtspUrlMutationError = string | void
+    export type UpdateRtspUrlMutationError = AppErrorResponse
 
-    export const useUpdateRtspUrl = <TError = string | void,
+    export const useUpdateRtspUrl = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateRtspUrl>>, TError,{data: UpdateRTSPUrlPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateRtspUrl>>,
@@ -1098,7 +1109,7 @@ export const getGetTrimHistoryQueryKey = () => {
     }
 
 
-export const getGetTrimHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getTrimHistory>>, TError = void | string>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimHistory>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getGetTrimHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getTrimHistory>>, TError = void | AppErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimHistory>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1117,10 +1128,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetTrimHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getTrimHistory>>>
-export type GetTrimHistoryQueryError = void | string
+export type GetTrimHistoryQueryError = void | AppErrorResponse
 
 
-export function useGetTrimHistory<TData = Awaited<ReturnType<typeof getTrimHistory>>, TError = void | string>(
+export function useGetTrimHistory<TData = Awaited<ReturnType<typeof getTrimHistory>>, TError = void | AppErrorResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimHistory>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getTrimHistory>>,
@@ -1130,7 +1141,7 @@ export function useGetTrimHistory<TData = Awaited<ReturnType<typeof getTrimHisto
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetTrimHistory<TData = Awaited<ReturnType<typeof getTrimHistory>>, TError = void | string>(
+export function useGetTrimHistory<TData = Awaited<ReturnType<typeof getTrimHistory>>, TError = void | AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimHistory>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getTrimHistory>>,
@@ -1140,12 +1151,12 @@ export function useGetTrimHistory<TData = Awaited<ReturnType<typeof getTrimHisto
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetTrimHistory<TData = Awaited<ReturnType<typeof getTrimHistory>>, TError = void | string>(
+export function useGetTrimHistory<TData = Awaited<ReturnType<typeof getTrimHistory>>, TError = void | AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimHistory>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGetTrimHistory<TData = Awaited<ReturnType<typeof getTrimHistory>>, TError = void | string>(
+export function useGetTrimHistory<TData = Awaited<ReturnType<typeof getTrimHistory>>, TError = void | AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimHistory>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1180,7 +1191,7 @@ export const updateTrimHistory = (
 
 
 
-export const getUpdateTrimHistoryMutationOptions = <TError = void | string,
+export const getUpdateTrimHistoryMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTrimHistory>>, TError,{data: UpdateTrimHistoryPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateTrimHistory>>, TError,{data: UpdateTrimHistoryPayload}, TContext> => {
 
@@ -1209,9 +1220,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateTrimHistoryMutationResult = NonNullable<Awaited<ReturnType<typeof updateTrimHistory>>>
     export type UpdateTrimHistoryMutationBody = UpdateTrimHistoryPayload
-    export type UpdateTrimHistoryMutationError = void | string
+    export type UpdateTrimHistoryMutationError = AppErrorResponse
 
-    export const useUpdateTrimHistory = <TError = void | string,
+    export const useUpdateTrimHistory = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTrimHistory>>, TError,{data: UpdateTrimHistoryPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateTrimHistory>>,
@@ -1244,7 +1255,7 @@ export const getGetTrimSnapshotsQueryKey = () => {
     }
 
 
-export const getGetTrimSnapshotsQueryOptions = <TData = Awaited<ReturnType<typeof getTrimSnapshots>>, TError = void | string>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimSnapshots>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getGetTrimSnapshotsQueryOptions = <TData = Awaited<ReturnType<typeof getTrimSnapshots>>, TError = AppErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimSnapshots>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1263,10 +1274,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetTrimSnapshotsQueryResult = NonNullable<Awaited<ReturnType<typeof getTrimSnapshots>>>
-export type GetTrimSnapshotsQueryError = void | string
+export type GetTrimSnapshotsQueryError = AppErrorResponse
 
 
-export function useGetTrimSnapshots<TData = Awaited<ReturnType<typeof getTrimSnapshots>>, TError = void | string>(
+export function useGetTrimSnapshots<TData = Awaited<ReturnType<typeof getTrimSnapshots>>, TError = AppErrorResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimSnapshots>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getTrimSnapshots>>,
@@ -1276,7 +1287,7 @@ export function useGetTrimSnapshots<TData = Awaited<ReturnType<typeof getTrimSna
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetTrimSnapshots<TData = Awaited<ReturnType<typeof getTrimSnapshots>>, TError = void | string>(
+export function useGetTrimSnapshots<TData = Awaited<ReturnType<typeof getTrimSnapshots>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimSnapshots>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getTrimSnapshots>>,
@@ -1286,12 +1297,12 @@ export function useGetTrimSnapshots<TData = Awaited<ReturnType<typeof getTrimSna
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetTrimSnapshots<TData = Awaited<ReturnType<typeof getTrimSnapshots>>, TError = void | string>(
+export function useGetTrimSnapshots<TData = Awaited<ReturnType<typeof getTrimSnapshots>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimSnapshots>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGetTrimSnapshots<TData = Awaited<ReturnType<typeof getTrimSnapshots>>, TError = void | string>(
+export function useGetTrimSnapshots<TData = Awaited<ReturnType<typeof getTrimSnapshots>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTrimSnapshots>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1326,7 +1337,7 @@ export const updateTrimSnapshots = (
 
 
 
-export const getUpdateTrimSnapshotsMutationOptions = <TError = void | string,
+export const getUpdateTrimSnapshotsMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTrimSnapshots>>, TError,{data: UpdateTrimSnapshotsPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof updateTrimSnapshots>>, TError,{data: UpdateTrimSnapshotsPayload}, TContext> => {
 
@@ -1355,9 +1366,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type UpdateTrimSnapshotsMutationResult = NonNullable<Awaited<ReturnType<typeof updateTrimSnapshots>>>
     export type UpdateTrimSnapshotsMutationBody = UpdateTrimSnapshotsPayload
-    export type UpdateTrimSnapshotsMutationError = void | string
+    export type UpdateTrimSnapshotsMutationError = AppErrorResponse
 
-    export const useUpdateTrimSnapshots = <TError = void | string,
+    export const useUpdateTrimSnapshots = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTrimSnapshots>>, TError,{data: UpdateTrimSnapshotsPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof updateTrimSnapshots>>,
@@ -1391,7 +1402,7 @@ export const getGetSnapshotQueryKey = (id: string,) => {
     }
 
 
-export const getGetSnapshotQueryOptions = <TData = Awaited<ReturnType<typeof getSnapshot>>, TError = void>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshot>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getGetSnapshotQueryOptions = <TData = Awaited<ReturnType<typeof getSnapshot>>, TError = AppErrorResponse>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshot>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1410,10 +1421,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetSnapshotQueryResult = NonNullable<Awaited<ReturnType<typeof getSnapshot>>>
-export type GetSnapshotQueryError = void
+export type GetSnapshotQueryError = AppErrorResponse
 
 
-export function useGetSnapshot<TData = Awaited<ReturnType<typeof getSnapshot>>, TError = void>(
+export function useGetSnapshot<TData = Awaited<ReturnType<typeof getSnapshot>>, TError = AppErrorResponse>(
  id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshot>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSnapshot>>,
@@ -1423,7 +1434,7 @@ export function useGetSnapshot<TData = Awaited<ReturnType<typeof getSnapshot>>, 
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSnapshot<TData = Awaited<ReturnType<typeof getSnapshot>>, TError = void>(
+export function useGetSnapshot<TData = Awaited<ReturnType<typeof getSnapshot>>, TError = AppErrorResponse>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshot>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getSnapshot>>,
@@ -1433,12 +1444,12 @@ export function useGetSnapshot<TData = Awaited<ReturnType<typeof getSnapshot>>, 
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetSnapshot<TData = Awaited<ReturnType<typeof getSnapshot>>, TError = void>(
+export function useGetSnapshot<TData = Awaited<ReturnType<typeof getSnapshot>>, TError = AppErrorResponse>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshot>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGetSnapshot<TData = Awaited<ReturnType<typeof getSnapshot>>, TError = void>(
+export function useGetSnapshot<TData = Awaited<ReturnType<typeof getSnapshot>>, TError = AppErrorResponse>(
  id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshot>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1478,7 +1489,7 @@ export const getMjpegStreamHandlerQueryKey = () => {
     }
 
 
-export const getMjpegStreamHandlerQueryOptions = <TData = Awaited<ReturnType<typeof mjpegStreamHandler>>, TError = void | string>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mjpegStreamHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getMjpegStreamHandlerQueryOptions = <TData = Awaited<ReturnType<typeof mjpegStreamHandler>>, TError = AppErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mjpegStreamHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1497,10 +1508,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type MjpegStreamHandlerQueryResult = NonNullable<Awaited<ReturnType<typeof mjpegStreamHandler>>>
-export type MjpegStreamHandlerQueryError = void | string
+export type MjpegStreamHandlerQueryError = AppErrorResponse
 
 
-export function useMjpegStreamHandler<TData = Awaited<ReturnType<typeof mjpegStreamHandler>>, TError = void | string>(
+export function useMjpegStreamHandler<TData = Awaited<ReturnType<typeof mjpegStreamHandler>>, TError = AppErrorResponse>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof mjpegStreamHandler>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof mjpegStreamHandler>>,
@@ -1510,7 +1521,7 @@ export function useMjpegStreamHandler<TData = Awaited<ReturnType<typeof mjpegStr
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useMjpegStreamHandler<TData = Awaited<ReturnType<typeof mjpegStreamHandler>>, TError = void | string>(
+export function useMjpegStreamHandler<TData = Awaited<ReturnType<typeof mjpegStreamHandler>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mjpegStreamHandler>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof mjpegStreamHandler>>,
@@ -1520,12 +1531,12 @@ export function useMjpegStreamHandler<TData = Awaited<ReturnType<typeof mjpegStr
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useMjpegStreamHandler<TData = Awaited<ReturnType<typeof mjpegStreamHandler>>, TError = void | string>(
+export function useMjpegStreamHandler<TData = Awaited<ReturnType<typeof mjpegStreamHandler>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mjpegStreamHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useMjpegStreamHandler<TData = Awaited<ReturnType<typeof mjpegStreamHandler>>, TError = void | string>(
+export function useMjpegStreamHandler<TData = Awaited<ReturnType<typeof mjpegStreamHandler>>, TError = AppErrorResponse>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof mjpegStreamHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1565,7 +1576,7 @@ export const getGetUsersQueryKey = () => {
     }
 
 
-export const getGetUsersQueryOptions = <TData = Awaited<ReturnType<typeof getUsers>>, TError = void | string>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getGetUsersQueryOptions = <TData = Awaited<ReturnType<typeof getUsers>>, TError = void | AppErrorResponse | string>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1584,10 +1595,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetUsersQueryResult = NonNullable<Awaited<ReturnType<typeof getUsers>>>
-export type GetUsersQueryError = void | string
+export type GetUsersQueryError = void | AppErrorResponse | string
 
 
-export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = void | string>(
+export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = void | AppErrorResponse | string>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUsers>>,
@@ -1597,7 +1608,7 @@ export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = void | string>(
+export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = void | AppErrorResponse | string>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getUsers>>,
@@ -1607,12 +1618,12 @@ export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = void | string>(
+export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = void | AppErrorResponse | string>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = void | string>(
+export function useGetUsers<TData = Awaited<ReturnType<typeof getUsers>>, TError = void | AppErrorResponse | string>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getUsers>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1647,7 +1658,7 @@ export const createUser = (
 
 
 
-export const getCreateUserMutationOptions = <TError = string | void,
+export const getCreateUserMutationOptions = <TError = string | void | AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserPayload}, TContext> => {
 
@@ -1676,9 +1687,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateUserMutationResult = NonNullable<Awaited<ReturnType<typeof createUser>>>
     export type CreateUserMutationBody = CreateUserPayload
-    export type CreateUserMutationError = string | void
+    export type CreateUserMutationError = string | void | AppErrorResponse
 
-    export const useCreateUser = <TError = string | void,
+    export const useCreateUser = <TError = string | void | AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createUser>>, TError,{data: CreateUserPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof createUser>>,
@@ -1704,7 +1715,7 @@ export const deleteUser = (
 
 
 
-export const getDeleteUserMutationOptions = <TError = void,
+export const getDeleteUserMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{id: number}, TContext> => {
 
@@ -1733,9 +1744,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type DeleteUserMutationResult = NonNullable<Awaited<ReturnType<typeof deleteUser>>>
 
-    export type DeleteUserMutationError = void
+    export type DeleteUserMutationError = AppErrorResponse
 
-    export const useDeleteUser = <TError = void,
+    export const useDeleteUser = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteUser>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof deleteUser>>,
@@ -1764,7 +1775,7 @@ export const changePassword = (
 
 
 
-export const getChangePasswordMutationOptions = <TError = void,
+export const getChangePasswordMutationOptions = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{id: number;data: ChangePasswordPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
 ): UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{id: number;data: ChangePasswordPayload}, TContext> => {
 
@@ -1793,9 +1804,9 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type ChangePasswordMutationResult = NonNullable<Awaited<ReturnType<typeof changePassword>>>
     export type ChangePasswordMutationBody = ChangePasswordPayload
-    export type ChangePasswordMutationError = void
+    export type ChangePasswordMutationError = AppErrorResponse
 
-    export const useChangePassword = <TError = void,
+    export const useChangePassword = <TError = AppErrorResponse,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changePassword>>, TError,{id: number;data: ChangePasswordPayload}, TContext>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof changePassword>>,
@@ -1807,13 +1818,14 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     }
 
 export const websocketHandler = (
-
+    params: WebsocketHandlerParams,
  options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
 ) => {
 
 
       return customAxios<unknown>(
-      {url: `/api/ws`, method: 'GET', signal
+      {url: `/api/ws`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -1821,23 +1833,23 @@ export const websocketHandler = (
 
 
 
-export const getWebsocketHandlerQueryKey = () => {
+export const getWebsocketHandlerQueryKey = (params?: WebsocketHandlerParams,) => {
     return [
-    `/api/ws`
+    `/api/ws`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getWebsocketHandlerQueryOptions = <TData = Awaited<ReturnType<typeof websocketHandler>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof websocketHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export const getWebsocketHandlerQueryOptions = <TData = Awaited<ReturnType<typeof websocketHandler>>, TError = void | AppErrorResponse>(params: WebsocketHandlerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof websocketHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getWebsocketHandlerQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getWebsocketHandlerQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof websocketHandler>>> = ({ signal }) => websocketHandler(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof websocketHandler>>> = ({ signal }) => websocketHandler(params, requestOptions, signal);
 
 
 
@@ -1847,11 +1859,11 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type WebsocketHandlerQueryResult = NonNullable<Awaited<ReturnType<typeof websocketHandler>>>
-export type WebsocketHandlerQueryError = void
+export type WebsocketHandlerQueryError = void | AppErrorResponse
 
 
-export function useWebsocketHandler<TData = Awaited<ReturnType<typeof websocketHandler>>, TError = void>(
-  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof websocketHandler>>, TError, TData>> & Pick<
+export function useWebsocketHandler<TData = Awaited<ReturnType<typeof websocketHandler>>, TError = void | AppErrorResponse>(
+ params: WebsocketHandlerParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof websocketHandler>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof websocketHandler>>,
           TError,
@@ -1860,8 +1872,8 @@ export function useWebsocketHandler<TData = Awaited<ReturnType<typeof websocketH
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useWebsocketHandler<TData = Awaited<ReturnType<typeof websocketHandler>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof websocketHandler>>, TError, TData>> & Pick<
+export function useWebsocketHandler<TData = Awaited<ReturnType<typeof websocketHandler>>, TError = void | AppErrorResponse>(
+ params: WebsocketHandlerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof websocketHandler>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof websocketHandler>>,
           TError,
@@ -1870,17 +1882,17 @@ export function useWebsocketHandler<TData = Awaited<ReturnType<typeof websocketH
       >, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useWebsocketHandler<TData = Awaited<ReturnType<typeof websocketHandler>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof websocketHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export function useWebsocketHandler<TData = Awaited<ReturnType<typeof websocketHandler>>, TError = void | AppErrorResponse>(
+ params: WebsocketHandlerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof websocketHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useWebsocketHandler<TData = Awaited<ReturnType<typeof websocketHandler>>, TError = void>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof websocketHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+export function useWebsocketHandler<TData = Awaited<ReturnType<typeof websocketHandler>>, TError = void | AppErrorResponse>(
+ params: WebsocketHandlerParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof websocketHandler>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getWebsocketHandlerQueryOptions(options)
+  const queryOptions = getWebsocketHandlerQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
