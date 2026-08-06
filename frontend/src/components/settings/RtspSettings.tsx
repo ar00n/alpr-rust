@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useGetRtspUrl, useUpdateRtspUrl, getGetRtspUrlQueryKey } from '@/lib/rust_api/schema';
+import { getErrorMessage } from '@/src/main';
 
 export default function RtspSettings() {
   const queryClient = useQueryClient();
@@ -44,7 +45,8 @@ export default function RtspSettings() {
       queryClient.invalidateQueries({ queryKey: getGetRtspUrlQueryKey() });
       setRtspSuccess("RTSP stream URL updated and verified successfully!");
     } catch (error: any) {
-      setRtspError(error?.response?.data || error?.message || "Failed to validate RTSP connection.");
+      const errorMessage = getErrorMessage(error);
+      setRtspError(errorMessage);
     }
   };
 

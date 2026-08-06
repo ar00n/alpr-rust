@@ -123,7 +123,8 @@ export default function CustomActions() {
       setApiKeyName('X-API-Key');
       setApiKeyPlacement('header');
     } catch (err: any) {
-      setError(err?.message || err?.response?.data || "Failed to save action.");
+      const errorMessage = getErrorMessage(error);
+      setError(errorMessage);
     }
   };
 

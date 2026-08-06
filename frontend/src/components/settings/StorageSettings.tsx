@@ -13,6 +13,7 @@ import {
   useUpdateTrimHistory,
   getGetTrimHistoryQueryKey
 } from '@/lib/rust_api/schema';
+import { getErrorMessage } from '@/src/main';
 
 export default function StorageSettings() {
   const queryClient = useQueryClient();
@@ -48,7 +49,8 @@ export default function StorageSettings() {
       queryClient.invalidateQueries({ queryKey: getGetTrimSnapshotsQueryKey() });
       setTrimSuccess("Snapshot storage limit updated successfully!");
     } catch (error: any) {
-      setTrimError(error?.response?.data || error?.message || "Failed to update storage limit.");
+      const errorMessage = getErrorMessage(error);
+      setTrimError(errorMessage);
     }
   };
 
@@ -83,7 +85,8 @@ export default function StorageSettings() {
       queryClient.invalidateQueries({ queryKey: getGetTrimHistoryQueryKey() });
       setHistorySuccess("History retention limit updated successfully!");
     } catch (error: any) {
-      setHistoryError(error?.response?.data || error?.message || "Failed to update history limit.");
+      const errorMessage = getErrorMessage(error);
+      setHistoryError(errorMessage);
     }
   };
 
