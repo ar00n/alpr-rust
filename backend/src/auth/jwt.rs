@@ -27,9 +27,9 @@ pub fn generate_ed25519_keys(priv_path: &Path, pub_path: &Path) {
 
 pub fn setup_jwt() -> JWT {
     let priv_path: String =
-        std::env::var("PRIV_KEY_PATH").unwrap_or_else(|_| "ed_private.pem".to_string());
+        std::env::var("PRIV_KEY_PATH").unwrap_or_else(|_| "data/keys/ed_private.pem".to_string());
     let pub_path: String =
-        std::env::var("PUB_KEY_PATH").unwrap_or_else(|_| "ed_public.pem".to_string());
+        std::env::var("PUB_KEY_PATH").unwrap_or_else(|_| "data/keys/ed_public.pem".to_string());
 
     let priv_path = Path::new(&priv_path);
     let pub_path = Path::new(&pub_path);

@@ -34,10 +34,34 @@ export interface ChangePasswordPayload {
   new_password: string;
 }
 
+export interface CreateCustomAction {
+  /** Sensitive credentials (e.g., {"username": "admin", "password": "123"}) */
+  auth_data?: unknown;
+  auth_type: string;
+  /** @nullable */
+  body_template?: string | null;
+  /** Optional custom headers */
+  headers?: unknown;
+  method: string;
+  name: string;
+  url: string;
+}
+
 export interface CreateUserPayload {
   is_admin: boolean;
   password: string;
   username: string;
+}
+
+export interface CustomActionResponse {
+  auth_type: string;
+  /** @nullable */
+  body_template?: string | null;
+  headers?: unknown;
+  id: number;
+  method: string;
+  name: string;
+  url: string;
 }
 
 export interface LoginResponse {
@@ -55,9 +79,6 @@ export interface PlateRead {
   was_allowed: boolean;
 }
 
-/**
- * Paginated response payload structure
- */
 export interface PaginatedHistoryResponse {
   items: PlateRead[];
   /** @minimum 0 */
@@ -67,6 +88,12 @@ export interface PaginatedHistoryResponse {
   total: number;
   /** @minimum 0 */
   total_pages: number;
+}
+
+export interface TestActionResponse {
+  body: string;
+  /** @minimum 0 */
+  status: number;
 }
 
 export interface UpdateFrameratePayload {
@@ -108,18 +135,13 @@ export interface UserResponse {
 
 export type GetHistoryHandlerParams = {
 /**
- * Page number (1-indexed, defaults to 1)
  * @minimum 0
  */
 page?: number;
 /**
- * Number of items per page (defaults to 50, max 100)
  * @minimum 0
  */
 per_page?: number;
-/**
- * Optional license plate search query (substring match)
- */
 plate?: string;
 };
 
@@ -410,6 +432,268 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getLoginUserMutationOptions(options), queryClient);
+    }
+
+export const getCustomActions = (
+
+ options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
+) => {
+
+
+      return customAxios<CustomActionResponse[]>(
+      {url: `/api/custom-actions`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetCustomActionsQueryKey = () => {
+    return [
+    `/api/custom-actions`
+    ] as const;
+    }
+
+
+export const getGetCustomActionsQueryOptions = <TData = Awaited<ReturnType<typeof getCustomActions>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomActionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomActions>>> = ({ signal }) => getCustomActions(requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCustomActionsQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomActions>>>
+export type GetCustomActionsQueryError = void
+
+
+export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCustomActions>>,
+          TError,
+          Awaited<ReturnType<typeof getCustomActions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCustomActions>>,
+          TError,
+          Awaited<ReturnType<typeof getCustomActions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetCustomActions<TData = Awaited<ReturnType<typeof getCustomActions>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomActions>>, TError, TData>>, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCustomActionsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const addCustomAction = (
+    createCustomAction: CreateCustomAction,
+ options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
+) => {
+
+
+      return customAxios<CustomActionResponse>(
+      {url: `/api/custom-actions`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createCustomAction, signal
+    },
+      options);
+    }
+
+
+
+
+export const getAddCustomActionMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCustomAction>>, TError,{data: CreateCustomAction}, TContext>, request?: SecondParameter<typeof customAxios>}
+): UseMutationOptions<Awaited<ReturnType<typeof addCustomAction>>, TError,{data: CreateCustomAction}, TContext> => {
+
+const mutationKey = ['addCustomAction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addCustomAction>>, {data: CreateCustomAction}> = (props) => {
+          const {data} = props ?? {};
+
+          return  addCustomAction(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddCustomActionMutationResult = NonNullable<Awaited<ReturnType<typeof addCustomAction>>>
+    export type AddCustomActionMutationBody = CreateCustomAction
+    export type AddCustomActionMutationError = void
+
+    export const useAddCustomAction = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCustomAction>>, TError,{data: CreateCustomAction}, TContext>, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof addCustomAction>>,
+        TError,
+        {data: CreateCustomAction},
+        TContext
+      > => {
+      return useMutation(getAddCustomActionMutationOptions(options), queryClient);
+    }
+
+export const testCustomAction = (
+    createCustomAction: CreateCustomAction,
+ options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
+) => {
+
+
+      return customAxios<TestActionResponse>(
+      {url: `/api/custom-actions/test`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createCustomAction, signal
+    },
+      options);
+    }
+
+
+
+
+export const getTestCustomActionMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testCustomAction>>, TError,{data: CreateCustomAction}, TContext>, request?: SecondParameter<typeof customAxios>}
+): UseMutationOptions<Awaited<ReturnType<typeof testCustomAction>>, TError,{data: CreateCustomAction}, TContext> => {
+
+const mutationKey = ['testCustomAction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof testCustomAction>>, {data: CreateCustomAction}> = (props) => {
+          const {data} = props ?? {};
+
+          return  testCustomAction(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TestCustomActionMutationResult = NonNullable<Awaited<ReturnType<typeof testCustomAction>>>
+    export type TestCustomActionMutationBody = CreateCustomAction
+    export type TestCustomActionMutationError = void
+
+    export const useTestCustomAction = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testCustomAction>>, TError,{data: CreateCustomAction}, TContext>, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof testCustomAction>>,
+        TError,
+        {data: CreateCustomAction},
+        TContext
+      > => {
+      return useMutation(getTestCustomActionMutationOptions(options), queryClient);
+    }
+
+export const deleteCustomAction = (
+    id: number,
+ options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
+) => {
+
+
+      return customAxios<void>(
+      {url: `/api/custom-actions/${id}`, method: 'DELETE', signal
+    },
+      options);
+    }
+
+
+
+
+export const getDeleteCustomActionMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCustomAction>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customAxios>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCustomAction>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteCustomAction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCustomAction>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteCustomAction(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCustomActionMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCustomAction>>>
+
+    export type DeleteCustomActionMutationError = void
+
+    export const useDeleteCustomAction = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCustomAction>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customAxios>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCustomAction>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteCustomActionMutationOptions(options), queryClient);
     }
 
 export const getHistoryHandler = (

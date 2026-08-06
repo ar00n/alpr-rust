@@ -1,4 +1,4 @@
-use crate::state::AppState;
+use crate::{error::AppError, state::AppState};
 use axum::{
     body::Body,
     extract::State,
@@ -33,7 +33,7 @@ use axum::{
 )]
 pub async fn mjpeg_stream_handler(
     State(state): State<AppState>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
+) -> Result<impl IntoResponse, AppError> {
     let mut rx = state.rtsp_tx.subscribe();
 
     // Use async-stream to yield chunks as they arrive from GStreamer
@@ -60,8 +60,7 @@ pub async fn mjpeg_stream_handler(
         )
         .body(Body::from_stream(stream))
         .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::internal(
                 format!("Failed to build stream: {}", e),
             )
         })?;

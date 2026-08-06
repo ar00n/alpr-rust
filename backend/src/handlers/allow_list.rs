@@ -6,8 +6,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 
 use crate::{
-    models::{AllowListEntry, User},
-    state::AppState,
+    error::AppError, models::{AllowListEntry, User}, state::AppState,
 };
 
 #[utoipa::path(
@@ -28,7 +27,7 @@ pub async fn add_allow_list(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
     Json(payload): Json<AllowListEntry>,
-) -> Result<Json<AllowListEntry>, (StatusCode, String)> {
+) -> Result<Json<AllowListEntry>, AppError> {
     sqlx::query!(
         r#"INSERT INTO allow_list (plate, expiry_date)
         VALUES (?, ?)
@@ -39,8 +38,7 @@ pub async fn add_allow_list(
         &payload.expiry_date
     )
     .execute(&state.db)
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .await?;
 
     Ok(Json(payload))
 }
@@ -61,14 +59,14 @@ pub async fn add_allow_list(
 pub async fn get_allow_list(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
-) -> Result<Json<Vec<AllowListEntry>>, (StatusCode, String)> {
+) -> Result<Json<Vec<AllowListEntry>>, AppError> {
     let list = sqlx::query_as!(
         AllowListEntry, 
         r#"SELECT plate, expiry_date AS "expiry_date: DateTime<Utc>" FROM allow_list"#
     )
     .fetch_all(&state.db)
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(|e| AppError::internal(e.to_string()))?;
 
     Ok(Json(list))
 }
@@ -94,17 +92,17 @@ pub async fn delete_allow_list(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
     Path(plate): Path<String>,
-) -> Result<StatusCode, (StatusCode, String)> {
+) -> Result<StatusCode, AppError> {
     let result = sqlx::query!(
         r#"DELETE FROM allow_list WHERE plate = ?"#,
         plate
     )
     .execute(&state.db)
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(|e| AppError::internal(e.to_string()))?;
 
     if result.rows_affected() == 0 {
-        return Err((StatusCode::NOT_FOUND, format!("Plate '{}' not found", plate)));
+        return Err(AppError::not_found(format!("Plate '{}' not found", plate)));
     }
 
     Ok(StatusCode::NO_CONTENT)

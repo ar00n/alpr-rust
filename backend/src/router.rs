@@ -39,6 +39,8 @@ pub fn build_router(state: AppState) -> Router {
         .routes(routes!(handlers::get_rtsp_url, handlers::update_rtsp_url))
         .routes(routes!(handlers::get_trim_snapshots, handlers::update_trim_snapshots))
         .routes(routes!(handlers::get_trim_history, handlers::update_trim_history))
+        .routes(routes!(handlers::add_custom_action, handlers::get_custom_actions, handlers::delete_custom_action))
+        .routes(routes!(handlers::test_custom_action))
         .route_layer(middleware::from_fn(auth::admin_middleware))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),

@@ -19,4 +19,5 @@ pub struct AppState {
     pub rtsp_tx: broadcast::Sender<Bytes>,
     pub pipeline_config_tx: watch::Sender<PipelineConfig>,
     pub jwt: JWT,
+    pub encryption_key: Vec<u8>,
 }

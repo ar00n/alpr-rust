@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Activity, History as HistoryIcon, Settings as SettingsIcon, Car, LogOut } from 'lucide-react';
+import { Activity, History as HistoryIcon, Settings as SettingsIcon, Car, LogOut, Zap } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -31,6 +31,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { RtspSetupModal } from './components/RtspSetupModal';
+import CustomActions from './components/CustomActions';
 
 export default function App() {
   const { isAdmin, logout } = useAuthStore();
@@ -215,7 +216,7 @@ export default function App() {
       {/* Responsive Scrollable / Adaptive Tabs */}
       <Tabs defaultValue="live" className="space-y-4 sm:space-y-6">
         <div className="w-full overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          <TabsList className={`w-full min-w-[360px] sm:min-w-0 grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'} h-auto p-1`}>
+          <TabsList className={`w-full min-w-[360px] sm:min-w-0 grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'} h-auto p-1`}>
             <TabsTrigger value="live" className="gap-1.5 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm">
               <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               <span className="truncate">Live View</span>
@@ -228,6 +229,12 @@ export default function App() {
               <Car className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
               <span className="truncate">Allowlist</span>
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="actions" className="gap-1.5 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm">
+                <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="truncate">Actions</span>
+              </TabsTrigger>
+            )}
             {isAdmin && (
               <TabsTrigger value="settings" className="gap-1.5 sm:gap-2 py-2 px-2 sm:px-3 text-xs sm:text-sm">
                 <SettingsIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
@@ -263,6 +270,11 @@ export default function App() {
         <TabsContent value="allowlist">
           <Allowlist />
         </TabsContent>
+        {isAdmin && (
+          <TabsContent value="actions">
+            <CustomActions />
+          </TabsContent>
+        )}
         {isAdmin && (
         <TabsContent value="settings">
           <Settings />

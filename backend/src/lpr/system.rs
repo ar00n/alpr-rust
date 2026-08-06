@@ -12,6 +12,7 @@ pub fn start_lpr_system(
     mut frame_rx: watch::Receiver<Option<VideoFrame>>,
     plate_tx: broadcast::Sender<PlateRead>,
     db_pool: Pool<Sqlite>,
+    encryption_key: Vec<u8>,
     snapshot_dir: String,
     config_rx: watch::Receiver<crate::models::PipelineConfig>,
     mut shutdown_rx: broadcast::Receiver<()>,
@@ -122,11 +123,12 @@ pub fn start_lpr_system(
                     // Branch B: Access Control Task
                     let event_for_gate = event.clone();
                     let db_for_gate = db_pool.clone();
+                    let encryption_key_clone = encryption_key.clone();
 
                     tasks.spawn(async move {
                         let is_allowed = db::check_whitelist(&event_for_gate.plate, &db_for_gate).await;
                         if is_allowed {
-                            gate::trigger_api(&event_for_gate.plate).await;
+                            let _ = gate::trigger_api(&db_for_gate, &encryption_key_clone, &event_for_gate.plate).await;
                         }
                     });
                 }

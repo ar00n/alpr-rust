@@ -1,6 +1,5 @@
 use axum::{
     extract::{FromRequestParts, Request, State},
-    http::StatusCode,
     middleware::Next,
     response::Response,
     Extension,
@@ -12,25 +11,19 @@ use axum_extra::{
 use jsonwebtoken::{decode, Algorithm, Validation};
 
 use crate::{
-    models::{Claims, User},
-    state::AppState,
+    error::AppError, models::{Claims, User}, state::AppState,
 };
 
 pub async fn auth_middleware(
     State(state): State<AppState>,
     req: Request,
     next: Next,
-) -> Result<Response, (StatusCode, String)> {
+) -> Result<Response, AppError> {
     let (mut parts, body) = req.into_parts();
 
     let auth_header = TypedHeader::<Authorization<Bearer>>::from_request_parts(&mut parts, &state)
         .await
-        .map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                "Missing or invalid Bearer token".into(),
-            )
-        })?;
+        .map_err(|_| AppError::unauthorized("Missing or invalid Bearer token"))?;
 
     let token = auth_header.token();
 
@@ -38,15 +31,15 @@ pub async fn auth_middleware(
     validation.algorithms = vec![Algorithm::EdDSA];
 
     let token_data = decode::<Claims>(token, &state.jwt.decoding_key, &validation)
-        .map_err(|e| (StatusCode::UNAUTHORIZED, e.to_string()))?;
+        .map_err(|e| AppError::unauthorized(e.to_string()))?;
 
     let claims = token_data.claims;
 
     let user = sqlx::query_as!(User, "SELECT * FROM users WHERE username = ?", &claims.sub)
         .fetch_optional(&state.db)
         .await
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Database error".into()))?
-        .ok_or((StatusCode::UNAUTHORIZED, "User not found".into()))?;
+        .map_err(|e| AppError::internal(e.to_string()))?
+        .ok_or(AppError::unauthorized("User not found"))?;
 
     parts.extensions.insert(user);
 
@@ -58,9 +51,9 @@ pub async fn admin_middleware(
     Extension(user): Extension<User>,
     req: Request,
     next: Next,
-) -> Result<Response, (StatusCode, &'static str)> {
+) -> Result<Response, AppError> {
     if user.username != "admin" {
-        return Err((StatusCode::FORBIDDEN, "Admin privileges required"));
+        return Err(AppError::forbidden("Admin privileges required"));
     }
 
     Ok(next.run(req).await)

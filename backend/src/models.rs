@@ -106,3 +106,38 @@ pub struct PlateEvent {
     pub confidence: f32,
     pub frame: VideoFrame,
 }
+
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+pub struct CreateCustomAction {
+    pub name: String,
+    #[schema(example = "POST")]
+    pub method: String,
+    #[schema(example = "http://192.168.1.10/open-gate")]
+    pub url: String,
+    #[schema(example = "BASIC")]
+    pub auth_type: String, 
+    /// Sensitive credentials (e.g., {"username": "admin", "password": "123"})
+    pub auth_data: Option<serde_json::Value>, 
+    /// Optional custom headers
+    pub headers: Option<serde_json::Value>, 
+    #[schema(example = "{\"plate\": \"${LICENCE_PLATE}\"}")]
+    pub body_template: Option<String>,
+}
+
+#[derive(Debug, Serialize, utoipa::ToSchema)]
+pub struct CustomActionResponse {
+    pub id: i64,
+    pub name: String,
+    pub method: String,
+    pub url: String,
+    pub auth_type: String,
+    // Note: auth_data is intentionally omitted for security!
+    pub headers: Option<serde_json::Value>,
+    pub body_template: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
+pub struct TestActionResponse {
+    pub status: u16,
+    pub body: String,
+}

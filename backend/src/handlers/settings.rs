@@ -1,12 +1,10 @@
-use axum::{extract::State, http::StatusCode, Extension, Json};
+use axum::{extract::State, Extension, Json};
 
 use crate::{
-    models::{
+    error::AppError, models::{
         UpdateFrameratePayload, UpdateRTSPUrlPayload, UpdateTrimHistoryPayload, 
         UpdateTrimSnapshotsPayload, User
-    }, 
-    rtsp::validate_rtsp_url, 
-    state::AppState,
+    }, rtsp::validate_rtsp_url, state::AppState,
 };
 
 /// Helper function to reduce boilerplate when updating a single setting in the DB
@@ -14,7 +12,7 @@ async fn update_db_setting(
     db: &sqlx::Pool<sqlx::Sqlite>,
     key: &str,
     value: Option<String>,
-) -> Result<(), (StatusCode, String)> {
+) -> Result<(), AppError> {
     sqlx::query!(
         r#"
             INSERT INTO settings (key, value)
@@ -27,7 +25,7 @@ async fn update_db_setting(
     )
     .execute(db)
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    .map_err(|e| AppError::internal(e.to_string()))?;
     
     Ok(())
 }
@@ -51,7 +49,7 @@ pub async fn update_framerate(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
     Json(payload): Json<UpdateFrameratePayload>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+) -> Result<Json<serde_json::Value>, AppError> {
     update_db_setting(
         &state.db, 
         "processing_framerate", 
@@ -84,7 +82,7 @@ pub async fn update_framerate(
 pub async fn get_framerate(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
-) -> Result<Json<UpdateFrameratePayload>, (StatusCode, String)> {
+) -> Result<Json<UpdateFrameratePayload>, AppError> {
     let framerate = state.pipeline_config_tx.borrow().fps;
     Ok(Json(UpdateFrameratePayload { framerate }))
 }
@@ -109,15 +107,15 @@ pub async fn update_rtsp_url(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
     Json(payload): Json<UpdateRTSPUrlPayload>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+) -> Result<Json<serde_json::Value>, AppError> {
     let url_to_check = payload.rtsp_url.clone();
     
     if let Some(ref url) = url_to_check {
         let url_clone = url.clone();
         tokio::task::spawn_blocking(move || validate_rtsp_url(&url_clone, 5))
             .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
-            .map_err(|e| (StatusCode::BAD_REQUEST, format!("RTSP Validation Failed: {}", e)))?;
+            .map_err(|e| AppError::internal(e.to_string()))?
+            .map_err(|e| AppError::bad_request(format!("RTSP Validation Failed: {}", e)))?;
     }
 
     // 2. Save to DB if validation succeeded
@@ -150,7 +148,7 @@ pub async fn update_rtsp_url(
 pub async fn get_rtsp_url(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
-) -> Result<Json<UpdateRTSPUrlPayload>, (StatusCode, String)> {
+) -> Result<Json<UpdateRTSPUrlPayload>, AppError> {
     let rtsp_url = state.pipeline_config_tx.borrow().rtsp_url.clone();
     Ok(Json(UpdateRTSPUrlPayload { rtsp_url }))
 }
@@ -174,7 +172,7 @@ pub async fn update_trim_snapshots(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
     Json(payload): Json<UpdateTrimSnapshotsPayload>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+) -> Result<Json<serde_json::Value>, AppError> {
     let value_str = payload.trim_snapshots_mb.map(|v| v.to_string());
 
     update_db_setting(&state.db, "trim_snapshots_mb", value_str).await?;
@@ -208,7 +206,7 @@ pub async fn update_trim_snapshots(
 pub async fn get_trim_snapshots(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
-) -> Result<Json<UpdateTrimSnapshotsPayload>, (StatusCode, String)> {
+) -> Result<Json<UpdateTrimSnapshotsPayload>, AppError> {
     let trim_snapshots_mb = state.pipeline_config_tx.borrow().trim_snapshots_mb;
     Ok(Json(UpdateTrimSnapshotsPayload { trim_snapshots_mb }))
 }
@@ -232,7 +230,7 @@ pub async fn update_trim_history(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
     Json(payload): Json<UpdateTrimHistoryPayload>,
-) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+) -> Result<Json<serde_json::Value>, AppError> {
     let value_str = payload.trim_history_days.map(|v| v.to_string());
 
     update_db_setting(&state.db, "trim_history_days", value_str).await?;
@@ -266,7 +264,7 @@ pub async fn update_trim_history(
 pub async fn get_trim_history(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
-) -> Result<Json<UpdateTrimHistoryPayload>, (StatusCode, String)> {
+) -> Result<Json<UpdateTrimHistoryPayload>, AppError> {
     let trim_history_days = state.pipeline_config_tx.borrow().trim_history_days;
     Ok(Json(UpdateTrimHistoryPayload { trim_history_days }))
 }

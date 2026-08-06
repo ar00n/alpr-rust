@@ -2,3 +2,4 @@ target
 .env
 snapshots
 anpr.db
+data

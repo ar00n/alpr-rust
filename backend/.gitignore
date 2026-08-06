@@ -2,6 +2,8 @@ target/
 outputs/
 assets/
 anpr.db
-ed_private.pem
-ed_public.pem
 snapshots/
+anpr.db
+anpr.db-shm
+anpr.db-wal
+data/

@@ -8,17 +8,16 @@ mod router;
 mod rtsp;
 mod shutdown;
 mod state;
+mod actions;
+mod error;
+mod crypto;
 
 use axum::body::Bytes;
 use tokio::sync::{broadcast, watch};
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 use crate::{
-    auth::jwt::setup_jwt,
-    lpr::system::start_lpr_system,
-    models::{PipelineConfig, PlateRead, VideoFrame},
-    rtsp::start_rtsp_ingest,
-    state::AppState,
+    auth::jwt::setup_jwt, crypto::get_or_create_key, lpr::system::start_lpr_system, models::{PipelineConfig, PlateRead, VideoFrame}, rtsp::start_rtsp_ingest, state::AppState,
 };
 
 #[tokio::main]
@@ -73,10 +72,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
+    let encryption_key = get_or_create_key().unwrap();
+
     let lpr_handle = start_lpr_system(
         pipeline_frame_rx,
         plate_tx.clone(),
         db.clone(),
+        encryption_key.clone(),
         snapshot_dir.clone(),
         pipeline_config_rx,
         shutdown_tx.subscribe(),
@@ -88,6 +90,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         rtsp_tx,
         pipeline_config_tx,
         jwt: setup_jwt(),
+        encryption_key,
     };
 
     let app = router::build_router(state);

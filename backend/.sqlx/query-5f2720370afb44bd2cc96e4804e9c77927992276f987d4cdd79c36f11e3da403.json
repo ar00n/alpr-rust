@@ -1,0 +1,98 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        SELECT id, name, method, url, auth_type, headers, body_template \n        FROM custom_actions\n        ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "custom_actions",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "custom_actions",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "method",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "custom_actions",
+            "name": "method"
+          }
+        }
+      },
+      {
+        "name": "url",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "custom_actions",
+            "name": "url"
+          }
+        }
+      },
+      {
+        "name": "auth_type",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "custom_actions",
+            "name": "auth_type"
+          }
+        }
+      },
+      {
+        "name": "headers",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "custom_actions",
+            "name": "headers"
+          }
+        }
+      },
+      {
+        "name": "body_template",
+        "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "custom_actions",
+            "name": "body_template"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "5f2720370afb44bd2cc96e4804e9c77927992276f987d4cdd79c36f11e3da403"
+}

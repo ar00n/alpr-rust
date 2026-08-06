@@ -39,7 +39,9 @@ The backend accepts the following environment variables (defaults match Docker r
 | `PRIV_KEY_PATH` | `/app/data/keys/ed_private.pem` | Path to Ed25519 private key |
 | `PUB_KEY_PATH` | `/app/data/keys/ed_public.pem` | Path to Ed25519 public key |
 | `SQLX_OFFLINE` | `true` (in Docker build) | Skip live DB connection during `sqlx` compilation |
-
+| `ENCRYPTION_KEY` | `None` | Custom encryption key for action credentials |
+| `ENABLE_OPENVINO` | `None` | Use OpenVINO for ML processing |
+| `ENABLE_CUDA` | `None` | Use CUDA for ML processing |
 ---
 
 ## 💻 Local Native Development Setup
