@@ -31,11 +31,6 @@ The inference pipeline leverages **ONNX Runtime (ort)** accelerated by **Intel O
     <b>Settings</b><br>
     <img src="https://github.com/ar00n/alpr-rust/blob/main/demo_pictures/settings.png" width="800" alt="Settings">
   </p>
-
-  <p align="center">
-    <b>Settings 2</b><br>
-    <img src="https://github.com/ar00n/alpr-rust/blob/main/demo_pictures/settings2.png" width="800" alt="Settings 2">
-  </p>
 </details>
 
 ---
