@@ -1,18 +1,22 @@
 # 🦀 ALPR Backend (Rust / Axum)
 
+![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white)
+![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
+![ONNX](https://img.shields.io/badge/ONNX-005CED?style=for-the-badge&logo=onnx&logoColor=white)
+
 The backend service handles real-time video processing, license plate detection, optical character recognition (OCR), database storage, custom webhook action execution, and REST API routing.
 
 ---
 
 ## 🛠 Features
 
-* **High-Speed Inference:** Powered by `ort` (ONNX Runtime) utilizing OpenVINO hardware acceleration.
+* **High-Speed Inference:** Powered by `ort` (ONNX Runtime) with support for hardware acceleration via **CUDA** or **Intel OpenVINO**.
 * **Axum Web Server:** Asynchronous, low-overhead HTTP API.
 * **Automated Webhooks & Actions:** Asynchronous background execution of dynamic HTTP requests (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`) triggered on allow-listed plate detections.
-* **Encrypted Secrets Management:** Secure encrypted storage for sensitive authentication data (`BASIC`, `BEARER`, `API_KEY`) in SQLite.
+* **Encrypted Secrets Management:** Secure encrypted storage for sensitive authentication data (`BASIC`, `BEARER`, `API_KEY`) in SQLite using Ed25519.
 * **Auto-Generated OpenAPI/Swagger Docs:** Served dynamically via `utoipa` and `utoipa-swagger-ui`.
 * **SQLx Database Integration:** Async SQLite database access with compile-time checked queries and auto-migrations.
-* **Video Stream Processing:** GStreamer integration for RTSP streams and video files.
+* **Video Stream Processing:** GStreamer integration for robust RTSP stream and video file ingestion.
 
 ---
 
@@ -31,7 +35,9 @@ When the inference pipeline detects a license plate that exists in the **Allow L
 
 ## 🧠 Model Configuration
 
-Ensure the following files are present in `backend/models/`:
+The following ONNX models and dictionary files are required for the inference pipeline. 
+
+*Note: These are pre-packaged within the repository (`backend/models/`) and Docker images, requiring no manual downloads.*
 
 ```text
 backend/models/
@@ -44,7 +50,7 @@ backend/models/
 
 ## 📋 Environment Variables
 
-The backend accepts the following environment variables (defaults match Docker runtime):
+The backend accepts the following environment variables (the defaults match the Docker Compose runtime):
 
 | Variable | Default Value | Description |
 |---|---|---|
@@ -55,14 +61,14 @@ The backend accepts the following environment variables (defaults match Docker r
 | `PUB_KEY_PATH` | `/app/data/keys/ed_public.pem` | Path to Ed25519 public key |
 | `SQLX_OFFLINE` | `true` (in Docker build) | Skip live DB connection during `sqlx` compilation |
 | `ENCRYPTION_KEY` | `None` | Custom secret key used to encrypt/decrypt credentials stored in `auth_data` |
-| `ENABLE_OPENVINO` | `None` | Use OpenVINO acceleration for ML processing |
-| `ENABLE_CUDA` | `None` | Use CUDA acceleration for ML processing |
+| `ENABLE_OPENVINO`| `None` | Set to enable Intel OpenVINO hardware acceleration |
+| `ENABLE_CUDA` | `None` | Set to enable Nvidia CUDA hardware acceleration |
 
 ---
 
 ## 💻 Local Native Development Setup
 
-To build and run the backend natively outside Docker, you will need the native dependencies installed on your system.
+If you prefer to build and run the backend natively outside of Docker, you will need the native C dependencies installed on your system.
 
 ### Prerequisites (Ubuntu/Debian)
 
@@ -73,17 +79,18 @@ sudo apt-get update && sudo apt-get install -y \
     libssl-dev libsqlite3-dev libglib2.0-dev \
     libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev
 
-# 2. Install Intel OpenVINO 2026 runtime & headers
-# (Follow Intel OpenVINO APT repository setup for your OS version)
+# Note: If you want to utilize hardware acceleration (ENABLE_CUDA or ENABLE_OPENVINO), 
+# you will also need to install the respective Nvidia CUDA Toolkit or Intel OpenVINO 
+# libraries required by ONNX Runtime for your specific OS.
 ```
 
 ### Running Migrations & Backend
 
 ```bash
-# 1. Install SQLx CLI (optional, for running migrations manually)
+# 1. Install SQLx CLI (optional, but required for running migrations manually)
 cargo install sqlx-cli --no-default-features --features sqlite
 
-# 2. Prepare database
+# 2. Prepare the database
 cargo sqlx database setup
 
 # 3. Run SQLx Migrations
@@ -97,5 +104,6 @@ cargo run
 
 ## 📖 API Documentation & Swagger
 
-Once the backend is running, access Swagger UI at:
+The backend automatically generates and serves OpenAPI documentation. Once the backend is running, you can access the Swagger UI at:
+
 * **Interactive UI:** `http://localhost:3000/swagger-ui/`
