@@ -59,7 +59,8 @@ pub fn start_lpr_system(
                 break;
             };
 
-            let results = pipeline.recognize_plate_from_rgb(map.as_slice(), frame.width, frame.height);
+            let results =
+                pipeline.recognize_plate_from_rgb(map.as_slice(), frame.width, frame.height);
 
             // Drop map to release the buffer lock before sending the frame through channels
             drop(map);
@@ -68,7 +69,11 @@ pub fn start_lpr_system(
                 Ok(results) => {
                     for (plate, confidence) in results {
                         if confidence < config_rx_w1.borrow().min_confidence {
-                            tracing::debug!("⚠️ Low confidence plate read: {} ({:.2})", plate, confidence);
+                            tracing::debug!(
+                                "⚠️ Low confidence plate read: {} ({:.2})",
+                                plate,
+                                confidence
+                            );
                             continue;
                         }
 
@@ -110,7 +115,7 @@ pub fn start_lpr_system(
                     let db_for_db = db_pool.clone();
                     let plate_tx_clone = plate_tx.clone();
                     let snapshot_dir = snapshot_dir.clone();
-                    
+
                     // Fetch latest trim config limit (handles if the config updates on the fly)
                     let trim_mb = config_rx.borrow().trim_snapshots_mb;
                     let trim_history_days = config_rx.borrow().trim_history_days;
@@ -122,7 +127,7 @@ pub fn start_lpr_system(
                         if let Some(plate_read) = db::log_read(&event_for_db, snapshot_path, &db_for_db).await {
                             let _ = plate_tx_clone.send(plate_read);
                         }
-                        
+
                         if let Some(trim_days) = trim_history_days {
                             db::trim_history(trim_days, &db_for_db, &snapshot_dir).await;
                         }

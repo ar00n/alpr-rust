@@ -64,11 +64,11 @@ pub fn get_onnx_providers() -> Vec<ExecutionProviderDispatch> {
 
     return providers;
 }
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum CharType {
     Letter,
     Number,
+    Dash,
 }
 
 fn fix_char(c: char, expected: CharType) -> char {
@@ -97,6 +97,7 @@ fn fix_char(c: char, expected: CharType) -> char {
             'B' => '8',
             _ => c,
         },
+        CharType::Dash => '-',
     }
 }
 
@@ -105,7 +106,12 @@ fn matches_expected(c: char, expected: CharType) -> bool {
     match expected {
         CharType::Letter => c.is_ascii_alphabetic(),
         CharType::Number => c.is_ascii_digit(),
+        CharType::Dash => c == '-',
     }
+}
+
+fn template_has_dash(template: &[CharType]) -> bool {
+    template.contains(&CharType::Dash)
 }
 
 fn score_template(plate: &str, template: &[CharType]) -> usize {
@@ -124,36 +130,86 @@ fn apply_template(plate: &str, template: &[CharType]) -> String {
         .collect()
 }
 
-pub fn clean_uk_numberplate(ocr_text: &str) -> String {
-    let sanitized: String = ocr_text
+pub fn clean_numberplate(ocr_text: &str) -> String {
+    let input_has_dash = ocr_text.contains('-') || ocr_text.contains('_');
+
+    let sanitized_with_dash: String = ocr_text
         .chars()
-        .filter(|c| c.is_ascii_alphanumeric())
-        .map(|c| c.to_ascii_uppercase())
+        .filter_map(|c| {
+            if c.is_ascii_alphanumeric() {
+                Some(c.to_ascii_uppercase())
+            } else if c == '-' || c == '_' || c == ' ' || c == '/' || c == '.' {
+                Some('-')
+            } else {
+                None
+            }
+        })
         .collect();
 
-    if sanitized.len() == 7 {
-        use CharType::{Letter as L, Number as N};
+    let sanitized_no_dash: String = sanitized_with_dash.chars().filter(|&c| c != '-').collect();
 
-        // Format 1: Current (Since 2001) -> e.g., AB12 CDE
-        let current_format = [L, L, N, N, L, L, L];
-        // Format 2: Prefix (1983-2001) -> e.g., A123 BCD
-        let prefix_format = [L, N, N, N, L, L, L];
-        // Format 3: Suffix (1963-1983) -> e.g., ABC 123D
-        let suffix_format = [L, L, L, N, N, N, L];
+    use CharType::{Dash as D, Letter as L, Number as N};
 
-        let templates = [
-            &current_format[..], // Checked first, wins tie-breakers
-            &prefix_format[..],
-            &suffix_format[..],
-        ];
+    let templates: &[&[CharType]] = &[
+        // --- UK Formats (Priority, No Hyphens) ---
+        &[L, L, N, N, L, L, L], // Current (Since 2001) -> e.g., AB12 CDE
+        &[L, N, N, N, L, L, L], // Prefix (1983-2001) -> e.g., A123 BCD
+        &[L, L, L, N, N, N, L], // Suffix (1963-1983) -> e.g., ABC 123D
+        &[L, L, L, N, N, N, N], // Northern Ireland -> e.g., ABC 1234
+        &[L, L, L, N, N, N],    // Pre-1963 -> e.g., ABC 123
+        &[N, N, N, L, L, L],    // Pre-1963 Reversed -> e.g., 123 ABC
+        // --- European Formats (With Hyphens) ---
+        &[L, L, D, N, N, N, D, L, L], // France / Italy (SIV) -> e.g., AA-123-AA
+        &[N, N, D, L, L, D, N, N],    // Netherlands -> e.g., 12-AB-34
+        &[L, L, D, N, N, D, L, L],    // Netherlands -> e.g., AB-12-CD
+        &[N, N, D, L, L, L, D, N],    // Netherlands -> e.g., 12-ABC-3
+        &[N, D, L, L, L, D, N, N],    // Netherlands -> e.g., 1-ABC-23
+        &[L, L, D, N, N, N, D, L],    // Germany -> e.g., B-AB-123 / HH-AB-12
+        &[L, D, L, L, D, N, N, N, N], // Germany -> e.g., B-AB-1234
+        &[N, N, D, N, N, D, L, L],    // Portugal -> e.g., 12-34-AB
+        &[L, L, L, D, N, N, N],       // Sweden / Finland -> e.g., ABC-123
+        // --- European Formats (Without Hyphens) ---
+        &[L, L, N, N, N, L, L], // France / Italy (without dashes) -> e.g., AA123AA
+        &[N, N, N, N, L, L, L], // Spain -> e.g., 1234 ABC
+        &[L, L, N, N, N, N],    // Generic EU -> e.g., AB1234
+    ];
 
-        let best_template = templates
-            .iter()
-            .max_by_key(|&&t| score_template(&sanitized, t))
-            .unwrap();
+    // Evaluate template scores.
+    // Tuple order for max_by_key:
+    // 1. Percentage score (higher is better)
+    // 2. Dash preference alignment (prefers dashed templates if input had hyphens)
+    // 3. Lower index in `templates` array (UK templates win tie-breakers)
+    let best = templates
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, &template)| {
+            let has_dash = template_has_dash(template);
+            let target_str = if has_dash {
+                &sanitized_with_dash
+            } else {
+                &sanitized_no_dash
+            };
 
-        return apply_template(&sanitized, best_template);
+            if target_str.len() == template.len() {
+                let score = score_template(target_str, template);
+                let percentage_score = (score * 1000) / template.len();
+                let dash_preference_match = has_dash == input_has_dash;
+
+                let key = (percentage_score, dash_preference_match, -(idx as isize));
+                Some((key, target_str, template))
+            } else {
+                None
+            }
+        })
+        .max_by_key(|&(key, _, _)| key);
+
+    if let Some((_, target_str, template)) = best {
+        return apply_template(target_str, template);
     }
 
-    sanitized
+    if input_has_dash {
+        sanitized_with_dash
+    } else {
+        sanitized_no_dash
+    }
 }

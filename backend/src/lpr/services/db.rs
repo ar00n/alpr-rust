@@ -1,6 +1,6 @@
+use crate::models::{PlateEvent, PlateRead};
 use chrono::{DateTime, Utc};
 use sqlx::{Pool, Sqlite};
-use crate::models::{PlateEvent, PlateRead};
 
 pub async fn log_read(
     event: &PlateEvent,
@@ -36,7 +36,11 @@ pub async fn log_read(
 
     match result {
         Ok(read) => {
-            tracing::debug!("[DB] Logged plate to history: {} (ID: {:?})", read.plate, read.id);
+            tracing::debug!(
+                "[DB] Logged plate to history: {} (ID: {:?})",
+                read.plate,
+                read.id
+            );
             Some(read)
         }
         Err(e) => {
@@ -68,7 +72,7 @@ pub async fn trim_history(days: u64, db: &Pool<Sqlite>, snapshot_dir: &str) {
     }
 
     let modifier = format!("-{} days", days);
-    
+
     let result = sqlx::query!(
         r#"
         DELETE FROM plate_reads 
@@ -83,12 +87,19 @@ pub async fn trim_history(days: u64, db: &Pool<Sqlite>, snapshot_dir: &str) {
     match result {
         Ok(deleted_rows) => {
             if !deleted_rows.is_empty() {
-                tracing::debug!("[DB] Trimmed {} old plate read(s) from history.", deleted_rows.len());
+                tracing::debug!(
+                    "[DB] Trimmed {} old plate read(s) from history.",
+                    deleted_rows.len()
+                );
                 for row in deleted_rows {
                     if let Some(path) = row.snapshot_image {
                         let filepath = format!("{snapshot_dir}/{}", path);
                         if let Err(e) = tokio::fs::remove_file(&filepath).await {
-                            tracing::warn!("[DB] Failed to remove orphaned snapshot file {}: {}", filepath, e);
+                            tracing::warn!(
+                                "[DB] Failed to remove orphaned snapshot file {}: {}",
+                                filepath,
+                                e
+                            );
                         }
                     }
                 }

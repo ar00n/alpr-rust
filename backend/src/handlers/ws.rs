@@ -7,7 +7,9 @@ use jsonwebtoken::{decode, Algorithm, Validation};
 use serde::Deserialize;
 
 use crate::{
-    error::{AppError, AppErrorResponse}, models::{Claims, User}, state::AppState,
+    error::{AppError, AppErrorResponse},
+    models::{Claims, User},
+    state::AppState,
 };
 
 #[derive(Deserialize)]
@@ -46,7 +48,9 @@ pub async fn websocket_handler(
         .map_err(|e| AppError::internal(e.to_string()))?
         .ok_or(AppError::unauthorized("User not found"))?;
 
-    Ok(ws.on_upgrade(move |socket| handle_websocket(socket, state)).into_response())
+    Ok(ws
+        .on_upgrade(move |socket| handle_websocket(socket, state))
+        .into_response())
 }
 
 async fn handle_websocket(mut socket: WebSocket, state: AppState) {

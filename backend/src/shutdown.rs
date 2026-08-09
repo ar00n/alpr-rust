@@ -28,5 +28,5 @@ pub async fn shutdown_signal(shutdown_tx: broadcast::Sender<()>) {
     }
 
     tracing::info!("Shutting down application gracefully...");
-    let _ = shutdown_tx.send(()); 
+    let _ = shutdown_tx.send(());
 }

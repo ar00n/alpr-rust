@@ -1,9 +1,13 @@
 use axum::{extract::State, Extension, Json};
 
 use crate::{
-    error::{AppError, AppErrorResponse}, models::{
-        UpdateFrameratePayload, UpdateMinConfidencePayload, UpdateRTSPUrlPayload, UpdateTrimHistoryPayload, UpdateTrimSnapshotsPayload, User
-    }, rtsp::validate_rtsp_url, state::AppState,
+    error::{AppError, AppErrorResponse},
+    models::{
+        UpdateFrameratePayload, UpdateMinConfidencePayload, UpdateRTSPUrlPayload,
+        UpdateTrimHistoryPayload, UpdateTrimSnapshotsPayload, User,
+    },
+    rtsp::validate_rtsp_url,
+    state::AppState,
 };
 
 async fn update_db_setting(
@@ -24,7 +28,7 @@ async fn update_db_setting(
     .execute(db)
     .await
     .map_err(|e| AppError::internal(e.to_string()))?;
-    
+
     Ok(())
 }
 
@@ -49,10 +53,11 @@ pub async fn update_framerate(
     Json(payload): Json<UpdateFrameratePayload>,
 ) -> Result<Json<serde_json::Value>, AppError> {
     update_db_setting(
-        &state.db, 
-        "processing_framerate", 
-        Some(payload.framerate.to_string())
-    ).await?;
+        &state.db,
+        "processing_framerate",
+        Some(payload.framerate.to_string()),
+    )
+    .await?;
 
     state.pipeline_config_tx.send_modify(|config| {
         config.fps = payload.framerate;
@@ -107,12 +112,10 @@ pub async fn update_rtsp_url(
     Json(payload): Json<UpdateRTSPUrlPayload>,
 ) -> Result<Json<serde_json::Value>, AppError> {
     let url_to_check = payload.rtsp_url.clone();
-    
-    if let Some(ref url) = url_to_check {
-        let url_clone = url.clone();
-        tokio::task::spawn_blocking(move || validate_rtsp_url(&url_clone, 5))
+
+    if let Some(url) = url_to_check {
+        validate_rtsp_url(url, 5)
             .await
-            .map_err(|e| AppError::internal(e.to_string()))?
             .map_err(|e| AppError::bad_request(format!("RTSP Validation Failed: {}", e)))?;
     }
 
@@ -177,12 +180,10 @@ pub async fn update_trim_snapshots(
         config.trim_snapshots_mb = payload.trim_snapshots_mb;
     });
 
-    Ok(Json(
-        serde_json::json!({
-            "status": "success",
-            "trim_snapshots_mb": payload.trim_snapshots_mb
-        }),
-    ))
+    Ok(Json(serde_json::json!({
+        "status": "success",
+        "trim_snapshots_mb": payload.trim_snapshots_mb
+    })))
 }
 
 #[utoipa::path(
@@ -235,12 +236,10 @@ pub async fn update_trim_history(
         config.trim_history_days = payload.trim_history_days;
     });
 
-    Ok(Json(
-        serde_json::json!({
-            "status": "success",
-            "trim_history_days": payload.trim_history_days
-        }),
-    ))
+    Ok(Json(serde_json::json!({
+        "status": "success",
+        "trim_history_days": payload.trim_history_days
+    })))
 }
 
 #[utoipa::path(
@@ -286,10 +285,11 @@ pub async fn update_min_confidence(
     Json(payload): Json<UpdateMinConfidencePayload>,
 ) -> Result<Json<serde_json::Value>, AppError> {
     update_db_setting(
-        &state.db, 
-        "min_confidence", 
-        Some(payload.min_confidence.to_string())
-    ).await?;
+        &state.db,
+        "min_confidence",
+        Some(payload.min_confidence.to_string()),
+    )
+    .await?;
 
     state.pipeline_config_tx.send_modify(|config| {
         config.min_confidence = payload.min_confidence;

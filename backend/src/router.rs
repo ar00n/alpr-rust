@@ -1,15 +1,10 @@
 use axum::{middleware, Router};
 use tower_http::cors::{Any, CorsLayer};
+use utoipa::OpenApi;
 use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_swagger_ui::SwaggerUi;
-use utoipa::OpenApi;
 
-use crate::{
-    auth,
-    handlers,
-    openapi,
-    state::AppState,
-};
+use crate::{auth, handlers, openapi, state::AppState};
 
 pub fn build_router(state: AppState) -> Router {
     let cors = CorsLayer::new()
@@ -26,6 +21,10 @@ pub fn build_router(state: AppState) -> Router {
         .routes(routes!(handlers::get_snapshot))
         .routes(routes!(handlers::get_allow_list, handlers::add_allow_list))
         .routes(routes!(handlers::delete_allow_list))
+        .routes(routes!(
+            handlers::export_allow_list_csv,
+            handlers::import_allow_list_csv
+        ))
         .routes(routes!(handlers::mjpeg_stream_handler))
         .routes(routes!(handlers::change_password))
         .route_layer(middleware::from_fn_with_state(
@@ -34,13 +33,30 @@ pub fn build_router(state: AppState) -> Router {
         ));
 
     let admin_routes = OpenApiRouter::new()
-        .routes(routes!(handlers::create_user, handlers::delete_user, handlers::get_users))
+        .routes(routes!(
+            handlers::create_user,
+            handlers::delete_user,
+            handlers::get_users
+        ))
         .routes(routes!(handlers::get_framerate, handlers::update_framerate))
         .routes(routes!(handlers::get_rtsp_url, handlers::update_rtsp_url))
-        .routes(routes!(handlers::get_trim_snapshots, handlers::update_trim_snapshots))
-        .routes(routes!(handlers::get_trim_history, handlers::update_trim_history))
-        .routes(routes!(handlers::get_min_confidence, handlers::update_min_confidence))
-        .routes(routes!(handlers::add_custom_action, handlers::get_custom_actions, handlers::delete_custom_action))
+        .routes(routes!(
+            handlers::get_trim_snapshots,
+            handlers::update_trim_snapshots
+        ))
+        .routes(routes!(
+            handlers::get_trim_history,
+            handlers::update_trim_history
+        ))
+        .routes(routes!(
+            handlers::get_min_confidence,
+            handlers::update_min_confidence
+        ))
+        .routes(routes!(
+            handlers::add_custom_action,
+            handlers::get_custom_actions,
+            handlers::delete_custom_action
+        ))
         .routes(routes!(handlers::test_custom_action))
         .route_layer(middleware::from_fn(auth::admin_middleware))
         .route_layer(middleware::from_fn_with_state(

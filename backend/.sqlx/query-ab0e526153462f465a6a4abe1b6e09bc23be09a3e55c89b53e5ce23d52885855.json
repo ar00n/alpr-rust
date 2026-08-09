@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO allow_list (plate, expiry_date, name, metadata)\n            VALUES (?, ?, ?, ?)\n            ON CONFLICT(plate)\n            DO UPDATE SET \n                expiry_date = excluded.expiry_date,\n                name = excluded.name,\n                metadata = excluded.metadata",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "ab0e526153462f465a6a4abe1b6e09bc23be09a3e55c89b53e5ce23d52885855"
+}

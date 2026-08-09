@@ -2,8 +2,8 @@ use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use std::str::FromStr;
 
 pub async fn init_db() -> Result<sqlx::SqlitePool, Box<dyn std::error::Error>> {
-    let db_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "sqlite://anpr.db?mode=rwc".to_string());
+    let db_url =
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| "sqlite://anpr.db?mode=rwc".to_string());
 
     let options = SqliteConnectOptions::from_str(&db_url)?.create_if_missing(true);
     let db = SqlitePoolOptions::new().connect_with(options).await?;

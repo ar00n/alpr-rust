@@ -31,20 +31,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
     libgstreamer-plugins-bad1.0-dev \
-    && wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor -o /etc/apt/trusted.gpg.d/intel.gpg \
-    && echo "deb https://apt.repos.intel.com/openvino ubuntu24 main" > /etc/apt/sources.list.d/intel-openvino.list \
-    && apt-get update && apt-get install -y --no-install-recommends \
-    openvino-2026.3.0 \
+    # && wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor -o /etc/apt/trusted.gpg.d/intel.gpg \
+    # && echo "deb https://apt.repos.intel.com/openvino ubuntu24 main" > /etc/apt/sources.list.d/intel-openvino.list \
+    # && apt-get update && apt-get install -y --no-install-recommends \
+    # openvino-2026.3.0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install pre-built ONNX Runtime with OpenVINO EP support via PyPI into /opt/ort
-RUN pip install --no-cache-dir --target /opt/ort onnxruntime-openvino
+# RUN pip install --no-cache-dir --target /opt/ort onnxruntime-openvino
 
 # Set OpenVINO library and pkg-config paths for build stage
-ENV OPENVINO_DIR="/opt/intel/openvino_2026.3.0"
-ENV LD_LIBRARY_PATH="/opt/ort/onnxruntime/capi:/opt/intel/openvino_2026.3.0/runtime/lib/intel64:${LD_LIBRARY_PATH}"
-ENV PKG_CONFIG_PATH="/opt/intel/openvino_2026.3.0/runtime/lib/intel64/pkgconfig:${PKG_CONFIG_PATH}"
-ENV ORT_DYLIB_PATH="/opt/ort/onnxruntime/capi/libonnxruntime.so"
+# ENV OPENVINO_DIR="/opt/intel/openvino_2026.3.0"
+# ENV LD_LIBRARY_PATH="/opt/ort/onnxruntime/capi:/opt/intel/openvino_2026.3.0/runtime/lib/intel64:${LD_LIBRARY_PATH}"
+# ENV PKG_CONFIG_PATH="/opt/intel/openvino_2026.3.0/runtime/lib/intel64/pkgconfig:${PKG_CONFIG_PATH}"
+# ENV ORT_DYLIB_PATH="/opt/ort/onnxruntime/capi/libonnxruntime.so"
 
 # Cache dependencies
 RUN cargo chef cook --release --recipe-path recipe.json
@@ -63,8 +63,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg \
     ca-certificates \
-    && wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor -o /etc/apt/trusted.gpg.d/intel.gpg \
-    && echo "deb https://apt.repos.intel.com/openvino ubuntu24 main" > /etc/apt/sources.list.d/intel-openvino.list \
+    # && wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor -o /etc/apt/trusted.gpg.d/intel.gpg \
+    # && echo "deb https://apt.repos.intel.com/openvino ubuntu24 main" > /etc/apt/sources.list.d/intel-openvino.list \
     && apt-get update && apt-get install -y --no-install-recommends \
     libsqlite3-0 \
     libglib2.0-0 \
@@ -76,7 +76,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gstreamer1.0-plugins-ugly \
     gstreamer1.0-libav \
     gstreamer1.0-tools \
-    openvino-2026.3.0 \
+    # openvino-2026.3.0 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -85,7 +85,7 @@ WORKDIR /app
 COPY --from=builder /app/target/release/alpr_backend /usr/local/bin/alpr_backend
 
 # 2. Copy ONNX Runtime shared objects (including libonnxruntime_providers_openvino.so)
-COPY --from=builder /opt/ort/onnxruntime/capi/*.so* /app/
+# COPY --from=builder /opt/ort/onnxruntime/capi/*.so* /app/
 
 # 3. Copy models into the image
 COPY models /app/models
@@ -94,9 +94,9 @@ COPY models /app/models
 RUN mkdir -p /app/data /app/snapshots
 
 # Configure runtime environment paths for OpenVINO and ORT Dynamic Loading
-ENV OPENVINO_DIR="/opt/intel/openvino_2026.3.0"
-ENV LD_LIBRARY_PATH="/app:/opt/intel/openvino_2026.3.0/runtime/lib/intel64:${LD_LIBRARY_PATH}"
-ENV ORT_DYLIB_PATH="/app/libonnxruntime.so"
+# ENV OPENVINO_DIR="/opt/intel/openvino_2026.3.0"
+# ENV LD_LIBRARY_PATH="/app:/opt/intel/openvino_2026.3.0/runtime/lib/intel64:${LD_LIBRARY_PATH}"
+# ENV ORT_DYLIB_PATH="/app/libonnxruntime.so"
 
 ENV DATABASE_URL="sqlite:///app/data/anpr.db?mode=rwc"
 ENV SNAPSHOT_DIR="/app/snapshots"

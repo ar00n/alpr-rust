@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String, // Username
-    pub iat: usize,  // Issued at timestamp
-    pub exp: usize,  // Expiration timestamp
+    pub sub: String,    // Username
+    pub iat: usize,     // Issued at timestamp
+    pub exp: usize,     // Expiration timestamp
     pub is_admin: bool, // Admin flag
 }
 
@@ -19,10 +19,12 @@ pub struct PlateRead {
     pub timestamp: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, utoipa::ToSchema)]
+#[derive(Debug, Serialize, Deserialize, Clone, utoipa::ToSchema)]
 pub struct AllowListEntry {
     pub plate: String,
     pub expiry_date: Option<DateTime<Utc>>,
+    pub name: Option<String>,
+    pub metadata: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -101,7 +103,7 @@ pub struct PipelineConfig {
     pub rtsp_url: Option<String>,
     pub trim_snapshots_mb: Option<u64>,
     pub trim_history_days: Option<u64>,
-    pub min_confidence: f32
+    pub min_confidence: f32,
 }
 
 #[derive(Clone, Debug)]
@@ -119,11 +121,11 @@ pub struct CreateCustomAction {
     #[schema(example = "http://192.168.1.10/open-gate")]
     pub url: String,
     #[schema(example = "BASIC")]
-    pub auth_type: String, 
+    pub auth_type: String,
     /// Sensitive credentials (e.g., {"username": "admin", "password": "123"})
-    pub auth_data: Option<serde_json::Value>, 
+    pub auth_data: Option<serde_json::Value>,
     /// Optional custom headers
-    pub headers: Option<serde_json::Value>, 
+    pub headers: Option<serde_json::Value>,
     #[schema(example = "{\"plate\": \"${LICENCE_PLATE}\"}")]
     pub body_template: Option<String>,
     pub delay_seconds: Option<i64>,

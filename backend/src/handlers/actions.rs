@@ -1,9 +1,16 @@
-use axum::{extract::{Path, State}, Extension, Json};
+use axum::{
+    extract::{Path, State},
+    Extension, Json,
+};
 use reqwest::{Method, Url};
 use std::net::IpAddr;
 
 use crate::{
-    actions::{execute_action, is_ip_allowed}, crypto::encrypt_data, error::{AppError, AppErrorResponse}, models::{CreateCustomAction, CustomActionResponse, TestActionResponse, User}, state::AppState
+    actions::{execute_action, is_ip_allowed},
+    crypto::encrypt_data,
+    error::{AppError, AppErrorResponse},
+    models::{CreateCustomAction, CustomActionResponse, TestActionResponse, User},
+    state::AppState,
 };
 
 #[utoipa::path(
@@ -25,7 +32,7 @@ pub async fn add_custom_action(
     Json(payload): Json<CreateCustomAction>,
 ) -> Result<Json<CustomActionResponse>, AppError> {
     let url = Url::parse(&payload.url).map_err(|_| AppError::bad_request("Invalid URL format"))?;
-    
+
     if let Some(host_str) = url.host_str() {
         if let Ok(ip) = host_str.parse::<IpAddr>() {
             if !is_ip_allowed(ip) {
@@ -49,7 +56,7 @@ pub async fn add_custom_action(
     };
 
     let headers_str = payload.headers.as_ref().map(|v| v.to_string());
-    
+
     let delay = payload.delay_seconds.unwrap_or(0);
 
     let action_id = sqlx::query_scalar!(
@@ -78,7 +85,7 @@ pub async fn add_custom_action(
         method: payload.method,
         url: payload.url,
         auth_type: payload.auth_type,
-        headers: payload.headers, 
+        headers: payload.headers,
         body_template: payload.body_template,
         delay_seconds: Some(delay),
     }))
@@ -100,7 +107,6 @@ pub async fn test_custom_action(
     Extension(_user): Extension<User>,
     Json(payload): Json<CreateCustomAction>,
 ) -> Result<Json<TestActionResponse>, AppError> {
-    
     // Support sleeping on tests too so users know it works
     if let Some(delay) = payload.delay_seconds {
         if delay > 0 {
@@ -115,8 +121,9 @@ pub async fn test_custom_action(
         payload.headers.as_ref(),
         &payload.auth_type,
         payload.auth_data.as_ref(),
-        "TEST_PLATE_123"
-    ).await?;
+        "TEST_PLATE_123",
+    )
+    .await?;
 
     Ok(Json(TestActionResponse { status, body }))
 }
@@ -144,20 +151,23 @@ pub async fn get_custom_actions(
     .fetch_all(&state.db)
     .await?;
 
-    let actions = records.into_iter().map(|rec| {
-        let headers_val = rec.headers.and_then(|h| serde_json::from_str(&h).ok());
-        
-        CustomActionResponse {
-            id: rec.id,
-            name: rec.name,
-            method: rec.method,
-            url: rec.url,
-            auth_type: rec.auth_type,
-            headers: headers_val,
-            body_template: rec.body_template,
-            delay_seconds: rec.delay_seconds,
-        }
-    }).collect();
+    let actions = records
+        .into_iter()
+        .map(|rec| {
+            let headers_val = rec.headers.and_then(|h| serde_json::from_str(&h).ok());
+
+            CustomActionResponse {
+                id: rec.id,
+                name: rec.name,
+                method: rec.method,
+                url: rec.url,
+                auth_type: rec.auth_type,
+                headers: headers_val,
+                body_template: rec.body_template,
+                delay_seconds: rec.delay_seconds,
+            }
+        })
+        .collect();
 
     Ok(Json(actions))
 }
@@ -185,5 +195,7 @@ pub async fn delete_custom_action(
         .execute(&state.db)
         .await?;
 
-    Ok(Json(serde_json::json!({ "success": true, "message": "Action deleted" })))
+    Ok(Json(
+        serde_json::json!({ "success": true, "message": "Action deleted" }),
+    ))
 }

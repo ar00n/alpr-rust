@@ -1,7 +1,11 @@
-use image::{imageops::FilterType, DynamicImage, GenericImageView, Rgb, RgbImage};
+use fast_image_resize as fr;
+use image::{DynamicImage, GenericImageView, Rgb, RgbImage};
 use ndarray::{Array, Axis, Ix3};
 use ort::{
-    inputs, session::{Session, builder::GraphOptimizationLevel}, sys::OrtLoggingLevel, value::Tensor,
+    inputs,
+    session::{builder::GraphOptimizationLevel, Session},
+    sys::OrtLoggingLevel,
+    value::Tensor,
 };
 use std::error::Error;
 
@@ -25,7 +29,7 @@ pub struct YoloDetector {
 impl YoloDetector {
     pub fn new(model_path: &str, input_size: u32) -> Result<Self, Box<dyn Error>> {
         let session = Session::builder()?
-            .with_optimization_level(GraphOptimizationLevel::Level3)?
+            .with_optimization_level(GraphOptimizationLevel::All)?
             .with_execution_providers(get_onnx_providers())?
             .with_log_verbosity(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING as i32)?
             .commit_from_file(model_path)?;
@@ -37,7 +41,7 @@ impl YoloDetector {
 
     pub fn detect(&mut self, img: &DynamicImage) -> Result<Vec<BoundingBox>, Box<dyn Error>> {
         let (orig_width, orig_height) = img.dimensions();
-        let output_img = img.to_rgb8();
+        let rgb_img = img.to_rgb8(); // YOLO requires RGB
 
         let scale = (self.input_size as f32 / orig_width as f32)
             .min(self.input_size as f32 / orig_height as f32);
@@ -46,10 +50,34 @@ impl YoloDetector {
         let pad_w = (self.input_size - new_w) / 2;
         let pad_h = (self.input_size - new_h) / 2;
 
+        let src_image = fr::images::Image::from_vec_u8(
+            orig_width,
+            orig_height,
+            rgb_img.into_raw(),
+            fr::PixelType::U8x3,
+        )
+        .map_err(|_| "Failed to create source image")?;
+
+        let mut dst_image = fr::images::Image::new(new_w, new_h, fr::PixelType::U8x3);
+
+        let mut resizer = fr::Resizer::new();
+        resizer
+            .resize(&src_image, &mut dst_image, &fr::ResizeOptions::default())
+            .map_err(|_| "Resize failed")?;
+
         let mut padded_img =
             RgbImage::from_pixel(self.input_size, self.input_size, Rgb([114, 114, 114]));
-        let resized_img = image::imageops::resize(&output_img, new_w, new_h, FilterType::Triangle);
-        image::imageops::overlay(&mut padded_img, &resized_img, pad_w as i64, pad_h as i64);
+        let resized_bytes = dst_image.buffer();
+        let padded_bytes = padded_img.as_mut();
+
+        for y in 0..new_h {
+            let src_offset = (y * new_w * 3) as usize;
+            let dst_offset = ((y + pad_h) * self.input_size * 3 + pad_w * 3) as usize;
+            let row_bytes = (new_w * 3) as usize;
+
+            padded_bytes[dst_offset..dst_offset + row_bytes]
+                .copy_from_slice(&resized_bytes[src_offset..src_offset + row_bytes]);
+        }
 
         let img_data = padded_img.into_raw();
         let chw_array = Array::from_shape_vec(

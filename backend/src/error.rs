@@ -16,8 +16,8 @@ pub struct AppError {
 
 impl AppError {
     pub fn new(status: StatusCode, message: impl Into<Cow<'static, str>>) -> Self {
-        AppError { 
-            status, 
+        AppError {
+            status,
             message: message.into(),
         }
     }
@@ -64,7 +64,10 @@ impl From<reqwest::Error> for AppError {
     fn from(err: reqwest::Error) -> Self {
         if err.is_status() {
             if let Some(status) = err.status() {
-                return AppError::new(status, format!("HTTP request failed with status: {}", status));
+                return AppError::new(
+                    status,
+                    format!("HTTP request failed with status: {}", status),
+                );
             }
         }
         AppError::internal(format!("HTTP request error: {}", err))

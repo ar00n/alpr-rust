@@ -1,19 +1,28 @@
 use futures_util::future::join_all;
 use sqlx::{Pool, Sqlite};
 
-use crate::{actions::execute_action, crypto::decrypt_data, error::AppError, models::CreateCustomAction};
+use crate::{
+    actions::execute_action, crypto::decrypt_data, error::AppError, models::CreateCustomAction,
+};
 
-pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &str) -> Result<(), AppError> {
-    tracing::debug!("[GATE ACTUATION] Triggered open command for plate: {}", plate);
+pub async fn trigger_api(
+    conn: &Pool<Sqlite>,
+    encryption_key: &Vec<u8>,
+    plate: &str,
+) -> Result<(), AppError> {
+    tracing::debug!(
+        "[GATE ACTUATION] Triggered open command for plate: {}",
+        plate
+    );
 
     let records = sqlx::query!(
         r#"
         SELECT name, method, url, auth_type, auth_data, headers, body_template, delay_seconds 
         FROM custom_actions
         "#
-        )
-        .fetch_all(conn)
-        .await?;
+    )
+    .fetch_all(conn)
+    .await?;
 
     tracing::debug!("{:#?}", records);
 
@@ -26,8 +35,12 @@ pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &
             Some(data) => match decrypt_data(data, encryption_key) {
                 Ok(decrypted) => Some(decrypted),
                 Err(err) => {
-                    tracing::error!("Failed to decrypt auth_data for action '{}': {:?}", rec.name, err);
-                    continue; 
+                    tracing::error!(
+                        "Failed to decrypt auth_data for action '{}': {:?}",
+                        rec.name,
+                        err
+                    );
+                    continue;
                 }
             },
             None => None,
@@ -37,13 +50,17 @@ pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &
             Some(data) => match serde_json::from_str(&data) {
                 Ok(parsed) => Some(parsed),
                 Err(err) => {
-                    tracing::error!("Failed to parse decrypted auth_data JSON for action '{}': {:?}", rec.name, err);
-                    continue; 
+                    tracing::error!(
+                        "Failed to parse decrypted auth_data JSON for action '{}': {:?}",
+                        rec.name,
+                        err
+                    );
+                    continue;
                 }
             },
             None => None,
         };
-        
+
         actions.push(CreateCustomAction {
             name: rec.name,
             method: rec.method,
@@ -71,7 +88,8 @@ pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &
             &action.auth_type,
             action.auth_data.as_ref(),
             plate,
-        ).await
+        )
+        .await
     });
 
     let results = join_all(futures).await;
@@ -81,7 +99,9 @@ pub async fn trigger_api(conn: &Pool<Sqlite>, encryption_key: &Vec<u8>, plate: &
             Ok((status, response_body)) => {
                 tracing::debug!(
                     "Action '{}' succeeded with status {}: {}",
-                    action.name, status, response_body
+                    action.name,
+                    status,
+                    response_body
                 );
             }
             Err(err) => {

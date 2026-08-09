@@ -3,6 +3,7 @@ version: '3.8'
 services:
   backend:
     image: ghcr.io/ar00n/alpr-rust/backend:latest
+    restart: unless-stopped
     # ports:
     #   - "3000:3000"
     expose:
@@ -17,6 +18,7 @@ services:
 
   frontend:
     image: ghcr.io/ar00n/alpr-rust/frontend:latest
+    restart: unless-stopped
     ports:
       - "8080:80"
     depends_on:
@@ -24,10 +26,19 @@ services:
 
   cloudflared:
     image: cloudflare/cloudflared:latest
-    restart: always
+    restart: unless-stopped
     command: tunnel --no-autoupdate --protocol quic run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TOKEN}
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true # Deletes old images after updating
+      - WATCHTOWER_POLL_INTERVAL=86400 # Checks for updates every 24 hours (in seconds)
 
 volumes:
   backend_data:

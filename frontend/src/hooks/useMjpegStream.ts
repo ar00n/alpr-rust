@@ -105,6 +105,7 @@ export function useMjpegStream(props?: UseMjpegStreamProps) {
             isConnectedSet = true;
           }
 
+          // Append incoming chunk to buffer
           const newBuffer = new Uint8Array(buffer.length + value.length);
           newBuffer.set(buffer);
           newBuffer.set(value, buffer.length);
@@ -113,8 +114,8 @@ export function useMjpegStream(props?: UseMjpegStreamProps) {
           let searching = true;
           while (searching) {
             let start = -1;
-            let end = -1;
 
+            // Search for JPEG SOI (Start of Image) marker: 0xFF 0xD8
             for (let i = 0; i < buffer.length - 1; i++) {
               if (buffer[i] === 0xff && buffer[i + 1] === 0xd8) {
                 start = i;
@@ -123,28 +124,44 @@ export function useMjpegStream(props?: UseMjpegStreamProps) {
             }
 
             if (start !== -1) {
+              // Search for JPEG EOI (End of Image) marker: 0xFF 0xD9 after SOI
+              let end = -1;
               for (let i = start + 2; i < buffer.length - 1; i++) {
                 if (buffer[i] === 0xff && buffer[i + 1] === 0xd9) {
-                  end = i + 2;
+                  end = i;
                   break;
                 }
               }
-            }
 
-            if (start !== -1 && end !== -1) {
-              const jpegData = buffer.slice(start, end);
-              const blob = new Blob([jpegData], { type: 'image/jpeg' });
-              const objectUrl = URL.createObjectURL(blob);
+              if (end !== -1) {
+                // JPEG frame ends after 0xD9 (hence end + 2)
+                const frameEnd = end + 2;
+                const jpegData = buffer.slice(start, frameEnd);
+                const blob = new Blob([jpegData], { type: 'image/jpeg' });
+                const objectUrl = URL.createObjectURL(blob);
 
-              if (imgRef.current) {
-                if (imgRef.current.src) {
-                  URL.revokeObjectURL(imgRef.current.src);
+                if (imgRef.current) {
+                  if (imgRef.current.src) {
+                    URL.revokeObjectURL(imgRef.current.src);
+                  }
+                  imgRef.current.src = objectUrl;
                 }
-                imgRef.current.src = objectUrl;
-              }
 
-              buffer = buffer.slice(end);
+                // Advance buffer past this complete frame
+                buffer = buffer.slice(frameEnd);
+              } else {
+                // Incomplete frame; drop leading boundary/header data up to SOI
+                if (start > 0) {
+                  buffer = buffer.slice(start);
+                }
+                searching = false;
+              }
             } else {
+              // No SOI marker found in buffer.
+              // Retain last byte in case 0xFF is split across chunks.
+              if (buffer.length > 1) {
+                buffer = buffer.slice(buffer.length - 1);
+              }
               searching = false;
             }
           }

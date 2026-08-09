@@ -1,9 +1,18 @@
-use axum::{Extension, Json, extract::{Path, State}, http::StatusCode};
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    Extension, Json,
+};
 use chrono::{Duration, Utc};
 use jsonwebtoken::encode;
 
 use crate::{
-    error::{AppError, AppErrorResponse}, models::{ChangePasswordPayload, Claims, CreateUserPayload, LoginResponse, User, UserLoginRequest, UserResponse}, state::AppState,
+    error::{AppError, AppErrorResponse},
+    models::{
+        ChangePasswordPayload, Claims, CreateUserPayload, LoginResponse, User, UserLoginRequest,
+        UserResponse,
+    },
+    state::AppState,
 };
 
 #[utoipa::path(
@@ -94,9 +103,8 @@ pub async fn login_user(
         .map_err(|_| AppError::internal("Database error"))?,
     };
 
-    let token = encode(&state.jwt.header, &claims, &state.jwt.encoding_key).map_err(|_| {
-        AppError::internal("Error generating authentication token")
-    })?;
+    let token = encode(&state.jwt.header, &claims, &state.jwt.encoding_key)
+        .map_err(|_| AppError::internal("Error generating authentication token"))?;
 
     Ok(Json(LoginResponse { token }))
 }
@@ -142,12 +150,10 @@ pub async fn delete_user(
     };
 
     if user_to_delete.is_admin {
-        let admin_count = sqlx::query_scalar!(
-            "SELECT COUNT(*) FROM users WHERE is_admin = 1"
-        )
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(|e| AppError::internal(e.to_string()))?;
+        let admin_count = sqlx::query_scalar!("SELECT COUNT(*) FROM users WHERE is_admin = 1")
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(|e| AppError::internal(e.to_string()))?;
 
         if admin_count <= 1 {
             return Err(AppError::bad_request("Cannot delete the last admin user"));
@@ -193,20 +199,18 @@ pub async fn change_password(
     Json(payload): Json<ChangePasswordPayload>,
 ) -> Result<StatusCode, AppError> {
     if !user.is_admin && user.id != Some(id) {
-        return Err(AppError::forbidden("You can only change your own password unless you are an admin"));
+        return Err(AppError::forbidden(
+            "You can only change your own password unless you are an admin",
+        ));
     }
 
     let hash = bcrypt::hash(&payload.new_password, bcrypt::DEFAULT_COST)
         .map_err(|e| AppError::internal(e.to_string()))?;
 
-    let result = sqlx::query!(
-        "UPDATE users SET password_hash = ? WHERE id = ?",
-        hash,
-        id
-    )
-    .execute(&state.db)
-    .await
-    .map_err(|e| AppError::internal(e.to_string()))?;
+    let result = sqlx::query!("UPDATE users SET password_hash = ? WHERE id = ?", hash, id)
+        .execute(&state.db)
+        .await
+        .map_err(|e| AppError::internal(e.to_string()))?;
 
     if result.rows_affected() == 0 {
         return Err(AppError::not_found("User not found"));
@@ -233,13 +237,10 @@ pub async fn get_users(
     State(state): State<AppState>,
     Extension(_user): Extension<User>,
 ) -> Result<Json<Vec<UserResponse>>, AppError> {
-    let users = sqlx::query_as!(
-        UserResponse,
-        r#"SELECT id, username, is_admin FROM users"#
-    )
-    .fetch_all(&state.db)
-    .await
-    .map_err(|e| AppError::internal(e.to_string()))?;
+    let users = sqlx::query_as!(UserResponse, r#"SELECT id, username, is_admin FROM users"#)
+        .fetch_all(&state.db)
+        .await
+        .map_err(|e| AppError::internal(e.to_string()))?;
 
     Ok(Json(users))
 }

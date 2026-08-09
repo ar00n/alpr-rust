@@ -1,6 +1,6 @@
 use reqwest::{Client, Method, Url};
-use std::net::IpAddr;
 use serde_json::Value;
+use std::net::IpAddr;
 use std::net::ToSocketAddrs;
 
 use crate::error::AppError;
@@ -16,7 +16,9 @@ pub fn validate_url(url: &Url) -> Result<(), AppError> {
 
     if let Ok(ip) = host_str.parse::<IpAddr>() {
         if !is_ip_allowed(ip) {
-            return Err(AppError::forbidden("Access to restricted network (SSRF protection)"));
+            return Err(AppError::forbidden(
+                "Access to restricted network (SSRF protection)",
+            ));
         }
         return Ok(());
     }
@@ -26,7 +28,9 @@ pub fn validate_url(url: &Url) -> Result<(), AppError> {
         Ok(addrs) => {
             for addr in addrs {
                 if !is_ip_allowed(addr.ip()) {
-                    return Err(AppError::forbidden("Access to restricted network (SSRF protection)"));
+                    return Err(AppError::forbidden(
+                        "Access to restricted network (SSRF protection)",
+                    ));
                 }
             }
         }
@@ -39,16 +43,28 @@ pub fn validate_url(url: &Url) -> Result<(), AppError> {
 pub fn is_ip_allowed(ip: IpAddr) -> bool {
     match ip {
         IpAddr::V4(ipv4) => {
-            if ipv4.is_loopback() { return false; }
-            if ipv4.is_unspecified() { return false; }
-            if ipv4.is_link_local() { return false; }
-            if ipv4.octets()[0] == 172 && (16..=31).contains(&ipv4.octets()[1]) { return false; }
+            if ipv4.is_loopback() {
+                return false;
+            }
+            if ipv4.is_unspecified() {
+                return false;
+            }
+            if ipv4.is_link_local() {
+                return false;
+            }
+            if ipv4.octets()[0] == 172 && (16..=31).contains(&ipv4.octets()[1]) {
+                return false;
+            }
 
             true
         }
         IpAddr::V6(ipv6) => {
-            if ipv6.is_loopback() { return false; }
-            if ipv6.is_unspecified() { return false; }
+            if ipv6.is_loopback() {
+                return false;
+            }
+            if ipv6.is_unspecified() {
+                return false;
+            }
 
             if let [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, a, b, c, d] = ipv6.octets() {
                 return is_ip_allowed(IpAddr::V4(std::net::Ipv4Addr::new(a, b, c, d)));
@@ -60,22 +76,21 @@ pub fn is_ip_allowed(ip: IpAddr) -> bool {
 }
 
 pub async fn execute_action(
-    action_url: &str, 
-    method_str: &str, 
+    action_url: &str,
+    method_str: &str,
     template: Option<&str>,
     headers_val: Option<&Value>,
     auth_type: &str,
     auth_data: Option<&Value>,
-    licence_plate: &str
+    licence_plate: &str,
 ) -> Result<(u16, String), AppError> {
-    let url = Url::parse(action_url)
-        .map_err(|_| AppError::bad_request("Failed to parse url"))?;
+    let url = Url::parse(action_url).map_err(|_| AppError::bad_request("Failed to parse url"))?;
 
     validate_url(&url)?;
 
     let method = Method::from_bytes(method_str.to_uppercase().as_bytes())
         .map_err(|_| AppError::bad_request("Invalid method type."))?;
-    
+
     let client = Client::new();
     let mut request = client.request(method, url);
 
@@ -95,17 +110,24 @@ pub async fn execute_action(
                 }
             }
             "basic" => {
-                let username = a_data.get("username").and_then(|v| v.as_str()).unwrap_or("");
+                let username = a_data
+                    .get("username")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
                 let password = a_data.get("password").and_then(|v| v.as_str());
                 request = request.basic_auth(username, password);
             }
             "api_key" => {
                 let key_value = a_data.get("key").and_then(|v| v.as_str()).unwrap_or("");
-                let key_name = a_data.get("header_name")
+                let key_name = a_data
+                    .get("header_name")
                     .or_else(|| a_data.get("name"))
                     .and_then(|v| v.as_str())
                     .unwrap_or("X-API-Key");
-                let placement = a_data.get("placement").and_then(|v| v.as_str()).unwrap_or("header");
+                let placement = a_data
+                    .get("placement")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("header");
 
                 match placement.to_lowercase().as_str() {
                     "query" => {
@@ -123,19 +145,21 @@ pub async fn execute_action(
     if let Some(body_tmpl) = template {
         let escaped_plate = serde_json::to_string(licence_plate)
             .map_err(|_| AppError::bad_request("Failed to serialize licence plate"))?;
-        let clean_plate = &escaped_plate[1..escaped_plate.len()-1]; 
-        
+        let clean_plate = &escaped_plate[1..escaped_plate.len() - 1];
+
         let final_body = body_tmpl.replace("${LICENCE_PLATE}", clean_plate);
-        
+
         if serde_json::from_str::<Value>(&final_body).is_ok() {
             request = request.header("Content-Type", "application/json");
         }
         request = request.body(final_body);
     }
 
-    let response = request.send().await
+    let response = request
+        .send()
+        .await
         .map_err(|e| AppError::bad_request(format!("Action failed to execute: {}", e)))?;
-    
+
     let status = response.status().as_u16();
     let body = response.text().await.unwrap_or_else(|_| "".to_string());
 

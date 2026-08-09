@@ -1,22 +1,30 @@
-use futures::stream::StreamExt; // Required for bus_stream.next()
+use futures::stream::StreamExt;
 use gstreamer::prelude::*;
 use gstreamer_app::AppSink;
 use gstreamer_pbutils::Discoverer;
-use tokio::sync::{broadcast, watch};
+use std::sync::{
+    atomic::{AtomicU32, Ordering},
+    Arc,
+};
 use std::time::Duration;
+use tokio::sync::{broadcast, watch};
 
 use crate::models::{PipelineConfig, VideoFrame};
 
-pub fn validate_rtsp_url(url: &str, timeout_secs: u64) -> Result<(), String> {
-    gstreamer::init().map_err(|e| e.to_string())?;
+pub async fn validate_rtsp_url(url: String, timeout_secs: u64) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        gstreamer::init().map_err(|e| e.to_string())?;
 
-    let timeout = gstreamer::ClockTime::from_seconds(timeout_secs);
-    let discoverer = Discoverer::new(timeout).map_err(|e| e.to_string())?;
+        let timeout = gstreamer::ClockTime::from_seconds(timeout_secs);
+        let discoverer = Discoverer::new(timeout).map_err(|e| e.to_string())?;
 
-    match discoverer.discover_uri(url) {
-        Ok(_info) => Ok(()),
-        Err(e) => Err(format!("Failed to connect to RTSP stream: {}", e)),
-    }
+        match discoverer.discover_uri(&url) {
+            Ok(_info) => Ok(()),
+            Err(e) => Err(format!("Failed to connect to RTSP stream: {}", e)),
+        }
+    })
+    .await
+    .map_err(|e| format!("Task joined failed: {}", e))?
 }
 
 pub async fn start_rtsp_ingest(
@@ -32,7 +40,7 @@ pub async fn start_rtsp_ingest(
             if let Some(url) = config_rx.borrow().rtsp_url.clone() {
                 break url;
             }
-            
+
             tokio::select! {
                 _ = shutdown_rx.recv() => {
                     tracing::info!("RTSP ingest shutting down...");
@@ -47,10 +55,12 @@ pub async fn start_rtsp_ingest(
 
         tracing::info!("Starting/Restarting GStreamer pipeline for {}", rtsp_url);
 
+        let current_fps = Arc::new(AtomicU32::new(config_rx.borrow().fps));
+
         let pipeline_str = format!(
             "rtspsrc location={} latency=100 ! decodebin ! videorate name=rate_limiter drop-only=true ! tee name=t \
              t. ! queue ! videoconvert ! video/x-raw,format=RGB ! appsink name=rust_sink drop=true max-buffers=1 \
-             t. ! queue ! videoconvert ! jpegenc ! appsink name=browser_sink drop=true max-buffers=1",
+             t. ! queue ! videoconvert ! jpegenc quality=20 ! appsink name=browser_sink drop=true max-buffers=1",
             rtsp_url
         );
 
@@ -67,16 +77,19 @@ pub async fn start_rtsp_ingest(
         };
 
         let rate_limiter = pipeline.by_name("rate_limiter").unwrap();
-        let mut previous_fps = config_rx.borrow().fps;
-        
+
         // Clamp fps to a minimum of 1 to prevent GLib panics
-        rate_limiter.set_property("max-rate", previous_fps.max(1) as i32);
+        rate_limiter.set_property(
+            "max-rate",
+            current_fps.load(Ordering::Relaxed).max(1) as i32,
+        );
 
         let browser_sink = pipeline.by_name("browser_sink").unwrap();
         let browser_appsink = browser_sink.downcast::<AppSink>().unwrap();
 
         let tx_clone = tx.clone();
-        let config_rx_browser = config_rx.clone();
+        let fps_browser = current_fps.clone(); // Lock-free clone
+
         browser_appsink.set_callbacks(
             gstreamer_app::AppSinkCallbacks::builder()
                 .new_sample(move |appsink| {
@@ -84,7 +97,7 @@ pub async fn start_rtsp_ingest(
                         .pull_sample()
                         .map_err(|_| gstreamer::FlowError::Eos)?;
 
-                    if config_rx_browser.borrow().fps == 0 {
+                    if fps_browser.load(Ordering::Relaxed) == 0 {
                         return Ok(gstreamer::FlowSuccess::Ok);
                     }
 
@@ -104,8 +117,11 @@ pub async fn start_rtsp_ingest(
         let rust_sink = pipeline.by_name("rust_sink").unwrap();
         let rust_appsink = rust_sink.downcast::<AppSink>().unwrap();
 
-        let config_rx_rust = config_rx.clone();
+        let fps_rust = current_fps.clone();
         let pipeline_tx_clone = pipeline_tx.clone();
+
+        let mut cached_caps: Option<(gstreamer::Caps, u32, u32)> = None;
+
         rust_appsink.set_callbacks(
             gstreamer_app::AppSinkCallbacks::builder()
                 .new_sample(move |appsink| {
@@ -113,25 +129,48 @@ pub async fn start_rtsp_ingest(
                         .pull_sample()
                         .map_err(|_| gstreamer::FlowError::Eos)?;
 
-                    if config_rx_rust.borrow().fps == 0 {
+                    if fps_rust.load(Ordering::Relaxed) == 0 {
                         return Ok(gstreamer::FlowSuccess::Ok);
                     }
 
                     let caps = sample.caps().ok_or(gstreamer::FlowError::Error)?;
-                    let buffer = sample.buffer().ok_or(gstreamer::FlowError::Error)?;
 
-                    let s = caps.structure(0).ok_or(gstreamer::FlowError::Error)?;
-                    let width = s
-                        .get::<i32>("width")
-                        .map_err(|_| gstreamer::FlowError::Error)? as i64;
-                    let height = s
-                        .get::<i32>("height")
-                        .map_err(|_| gstreamer::FlowError::Error)? as i64;
+                    let (width, height) = if let Some((ref c, w, h)) = cached_caps {
+                        if c.as_ref() == caps {
+                            (w, h)
+                        } else {
+                            let s = caps.structure(0).ok_or(gstreamer::FlowError::Error)?;
+                            let w = s
+                                .get::<i32>("width")
+                                .map_err(|_| gstreamer::FlowError::Error)?
+                                as u32;
+                            let h = s
+                                .get::<i32>("height")
+                                .map_err(|_| gstreamer::FlowError::Error)?
+                                as u32;
+                            cached_caps = Some((caps.to_owned(), w, h));
+                            (w, h)
+                        }
+                    } else {
+                        let s = caps.structure(0).ok_or(gstreamer::FlowError::Error)?;
+                        let w = s
+                            .get::<i32>("width")
+                            .map_err(|_| gstreamer::FlowError::Error)?
+                            as u32;
+                        let h = s
+                            .get::<i32>("height")
+                            .map_err(|_| gstreamer::FlowError::Error)?
+                            as u32;
+                        cached_caps = Some((caps.to_owned(), w, h));
+                        (w, h)
+                    };
+
+                    let buffer = sample.buffer().ok_or(gstreamer::FlowError::Error)?;
 
                     let frame = VideoFrame {
                         buffer: buffer.to_owned(),
-                        width: width as u32,
-                        height: height as u32,
+                        width,
+                        height,
                     };
 
                     let _ = pipeline_tx_clone.send(Some(frame));
@@ -151,12 +190,10 @@ pub async fn start_rtsp_ingest(
         }
 
         let bus = pipeline.bus().unwrap();
-        let mut bus_stream = bus.stream(); // Create an async Stream of Gstreamer messages
+        let mut bus_stream = bus.stream();
 
-        // 2. The unified main async event loop
         loop {
             tokio::select! {
-                // Event A: Gstreamer Bus Messages
                 msg = bus_stream.next() => {
                     let Some(msg) = msg else { break };
                     match msg.view() {
@@ -172,9 +209,8 @@ pub async fn start_rtsp_ingest(
                     }
                 }
 
-                // Event B: Config Changes
                 res = config_rx.changed() => {
-                    if res.is_err() { break; } // Channel closed
+                    if res.is_err() { break; }
                     let config = config_rx.borrow();
 
                     if config.rtsp_url != Some(rtsp_url.clone()) {
@@ -182,18 +218,17 @@ pub async fn start_rtsp_ingest(
                         break;
                     }
 
+                    let previous_fps = current_fps.load(Ordering::Relaxed);
                     if config.fps != previous_fps {
                         tracing::info!("Updating GStreamer FPS limit to: {}", config.fps);
-                        // Prevent panic by ensuring max-rate >= 1
                         rate_limiter.set_property("max-rate", config.fps.max(1) as i32);
-                        previous_fps = config.fps;
+                        current_fps.store(config.fps, Ordering::Relaxed);
                     }
                 }
 
-                // Event C: App Shutdown
                 _ = shutdown_rx.recv() => {
                     tracing::info!("🛑 RTSP ingest received shutdown signal. Stopping pipeline...");
-                    let _ = tx.send(None); 
+                    let _ = tx.send(None);
                     stop_pipeline(&pipeline, &pipeline_tx);
                     return Ok(());
                 }
@@ -210,11 +245,7 @@ pub async fn start_rtsp_ingest(
     }
 }
 
-// Updated Stop Helper
-fn stop_pipeline(
-    pipeline: &gstreamer::Pipeline,
-    pipeline_tx: &watch::Sender<Option<VideoFrame>>,
-) {
+fn stop_pipeline(pipeline: &gstreamer::Pipeline, pipeline_tx: &watch::Sender<Option<VideoFrame>>) {
     if let Some(browser_sink) = pipeline.by_name("browser_sink") {
         if let Ok(browser_appsink) = browser_sink.downcast::<AppSink>() {
             browser_appsink.set_callbacks(gstreamer_app::AppSinkCallbacks::builder().build());

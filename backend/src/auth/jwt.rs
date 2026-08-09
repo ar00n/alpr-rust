@@ -5,9 +5,12 @@ use ed25519_dalek::{
 use jsonwebtoken::{Algorithm, DecodingKey, EncodingKey, Header};
 use rand::rand_core::UnwrapErr;
 use rand::rngs::SysRng;
-use std::{fs::{self, OpenOptions}, path::Path};
-use std::os::unix::fs::OpenOptionsExt;
 use std::io::Write;
+use std::os::unix::fs::OpenOptionsExt;
+use std::{
+    fs::{self, OpenOptions},
+    path::Path,
+};
 
 use crate::state::JWT;
 
@@ -25,10 +28,16 @@ pub fn generate_ed25519_keys(priv_path: &Path, pub_path: &Path) {
 
     let mut options = OpenOptions::new();
     options.write(true).create(true).truncate(true).mode(0o600);
-    options.open(priv_path).expect("Failed to open private key path.")
-        .write_all(priv_pem.as_bytes()).expect("Failed to write private key");
-    options.open(pub_path).expect("Failed to open public key path.")
-        .write_all(pub_pem.as_bytes()).expect("Failed to write public key");
+    options
+        .open(priv_path)
+        .expect("Failed to open private key path.")
+        .write_all(priv_pem.as_bytes())
+        .expect("Failed to write private key");
+    options
+        .open(pub_path)
+        .expect("Failed to open public key path.")
+        .write_all(pub_pem.as_bytes())
+        .expect("Failed to write public key");
 }
 
 pub fn setup_jwt() -> JWT {

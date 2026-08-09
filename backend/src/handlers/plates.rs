@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::{
-    error::AppErrorResponse, models::{PlateRead, User}, state::AppState,
+    error::AppErrorResponse,
+    models::{PlateRead, User},
+    state::AppState,
 };
 
 #[derive(Debug, Deserialize, IntoParams, ToSchema)]

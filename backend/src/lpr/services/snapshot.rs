@@ -1,8 +1,8 @@
-use image::{ImageBuffer, Rgb, DynamicImage};
 use crate::models::VideoFrame;
-use webp::Encoder;
+use image::{DynamicImage, ImageBuffer, Rgb};
 use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
+use webp::Encoder;
 
 pub async fn save(frame: &VideoFrame, plate: &str, snapshot_dir: &str) -> Option<String> {
     let width = frame.width;
@@ -16,15 +16,16 @@ pub async fn save(frame: &VideoFrame, plate: &str, snapshot_dir: &str) -> Option
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis();
-            
+
         let filepath = format!("{snapshot_dir}/{}_{}.webp", plate_string, timestamp);
 
         let map = buffer.map_readable().ok()?;
-        let img_buf = ImageBuffer::<Rgb<u8>, Vec<u8>>::from_raw(width, height, map.as_slice().to_vec())?;
+        let img_buf =
+            ImageBuffer::<Rgb<u8>, Vec<u8>>::from_raw(width, height, map.as_slice().to_vec())?;
         let dynamic_img = DynamicImage::ImageRgb8(img_buf);
 
         // Range: 0.0 (max compression / lowest quality) to 100.0 (best quality)
-        let quality = 5.0; 
+        let quality = 5.0;
 
         let encoder = Encoder::from_image(&dynamic_img).ok()?;
         let encoded_webp = encoder.encode(quality);
@@ -48,7 +49,9 @@ pub async fn trim(snapshot_dir: &str, max_mb: u64) {
 
     tokio::task::spawn_blocking(move || {
         let limit_bytes = max_mb * 1024 * 1024;
-        let Ok(entries) = fs::read_dir(&snapshot_dir) else { return };
+        let Ok(entries) = fs::read_dir(&snapshot_dir) else {
+            return;
+        };
 
         let mut files = Vec::new();
         let mut total_size = 0;
@@ -58,7 +61,7 @@ pub async fn trim(snapshot_dir: &str, max_mb: u64) {
                 if meta.is_file() {
                     let size = meta.len();
                     total_size += size;
-                    
+
                     let modified = meta.modified().unwrap_or(SystemTime::UNIX_EPOCH);
                     files.push((entry.path(), size, modified));
                 }

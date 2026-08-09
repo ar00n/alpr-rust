@@ -1,13 +1,17 @@
 use axum::{
     extract::{Path, State},
-    http::{header},
+    http::header,
     response::{IntoResponse, Response},
     Extension,
 };
 use std::path::PathBuf;
 use tokio::fs;
 
-use crate::{error::{AppError, AppErrorResponse}, models::User, state::AppState};
+use crate::{
+    error::{AppError, AppErrorResponse},
+    models::User,
+    state::AppState,
+};
 
 #[utoipa::path(
     get,
@@ -42,9 +46,9 @@ pub async fn get_snapshot(
         return Err(AppError::not_found("File not found"));
     }
 
-    let image_bytes = fs::read(&filepath)
-        .await
-        .map_err(|_| AppError::internal(format!("Failed to read file at {}", filepath.display())))?;
+    let image_bytes = fs::read(&filepath).await.map_err(|_| {
+        AppError::internal(format!("Failed to read file at {}", filepath.display()))
+    })?;
 
     let content_type = "image/webp";
 

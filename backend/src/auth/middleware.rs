@@ -11,7 +11,9 @@ use axum_extra::{
 use jsonwebtoken::{decode, Algorithm, Validation};
 
 use crate::{
-    error::AppError, models::{Claims, User}, state::AppState,
+    error::AppError,
+    models::{Claims, User},
+    state::AppState,
 };
 
 pub async fn auth_middleware(
