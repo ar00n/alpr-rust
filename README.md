@@ -33,6 +33,11 @@ The inference pipeline leverages **ONNX Runtime (ort)**—with support for **CUD
   </p>
 
   <p align="center">
+    <b>Actions</b><br>
+    <img src="https://github.com/ar00n/alpr-rust/blob/main/demo_pictures/actions?raw=true" width="800" alt="Actions">
+  </p>
+
+  <p align="center">
     <b>Settings</b><br>
     <img src="https://github.com/ar00n/alpr-rust/blob/main/demo_pictures/settings.jpg" width="800" alt="Settings">
   </p>
