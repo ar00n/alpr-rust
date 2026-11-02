@@ -14,7 +14,8 @@ import {
   getGetAllowListQueryKey,
   useDeleteAllowList,
   useImportAllowListCsv,
-  exportAllowListCsv
+  exportAllowListCsv,
+  type AllowListEntry
 } from '@/lib/rust_api/schema';
 
 type SearchField = 'all' | 'plate' | 'name' | 'metadata';
@@ -78,6 +79,19 @@ export default function Allowlist() {
         name: newName.trim() || null,
         metadata: newMetadata.trim() || null,
         expiry_date: newExpiry ? new Date(newExpiry).toISOString() : null,
+        enabled: true, // Default to enabled when adding new
+      },
+    });
+  };
+
+  const handleToggleStatus = (item: AllowListEntry) => {
+    addPlate({
+      data: {
+        plate: item.plate,
+        name: item.name ?? null,
+        metadata: item.metadata ?? null,
+        expiry_date: item.expiry_date ?? null,
+        enabled: !item.enabled,
       },
     });
   };
@@ -246,6 +260,7 @@ export default function Allowlist() {
             <TableHeader>
               <TableRow>
                 <TableHead>Plate Number</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Metadata</TableHead>
                 <TableHead>Expiry Date</TableHead>
@@ -255,13 +270,13 @@ export default function Allowlist() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                     Loading authorized vehicles...
                   </TableCell>
                 </TableRow>
               ) : isError ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                     <div className="flex items-center justify-center gap-2 text-destructive font-medium mb-2">
                       <AlertCircle className="h-5 w-5" />
                       <span>Failed to load history data.</span>
@@ -274,28 +289,52 @@ export default function Allowlist() {
                 </TableRow>
               ) : !filteredList || filteredList.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
                     No matching vehicles found.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredList.map((item) => (
-                  <TableRow key={item.plate}>
+                  <TableRow 
+                    key={item.plate} 
+                    className={!item.enabled ? "opacity-60 bg-muted/20" : undefined}
+                  >
                     <TableCell className="font-mono font-bold">{item.plate}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                          item.enabled
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {item.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </TableCell>
                     <TableCell>{item.name || <span className="text-muted-foreground">-</span>}</TableCell>
                     <TableCell>{item.metadata || <span className="text-muted-foreground">-</span>}</TableCell>
                     <TableCell>
                       {item.expiry_date ? new Date(item.expiry_date).toLocaleDateString() : 'Never'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleDelete(item.plate)}
-                        disabled={isDeleting}
-                      >
-                        <Trash2 size={16} className={isDeleting ? "text-muted-foreground" : "text-destructive"} />
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant={item.enabled ? "outline" : "default"}
+                          size="sm"
+                          onClick={() => handleToggleStatus(item)}
+                          disabled={isAdding}
+                        >
+                          {item.enabled ? 'Disable' : 'Enable'}
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleDelete(item.plate)}
+                          disabled={isDeleting}
+                        >
+                          <Trash2 size={16} className={isDeleting ? "text-muted-foreground" : "text-destructive"} />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

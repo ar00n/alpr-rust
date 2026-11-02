@@ -19,12 +19,18 @@ pub struct PlateRead {
     pub timestamp: DateTime<Utc>,
 }
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, utoipa::ToSchema)]
 pub struct AllowListEntry {
     pub plate: String,
     pub expiry_date: Option<DateTime<Utc>>,
     pub name: Option<String>,
     pub metadata: Option<String>,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]

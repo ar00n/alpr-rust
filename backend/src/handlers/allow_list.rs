@@ -53,18 +53,20 @@ pub async fn add_allow_list(
     payload.plate = validate_and_sanitize_plate(&payload.plate)?;
 
     sqlx::query!(
-        r#"INSERT INTO allow_list (plate, expiry_date, name, metadata)
-        VALUES (?, ?, ?, ?)
+        r#"INSERT INTO allow_list (plate, expiry_date, name, metadata, enabled)
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(plate)
         DO UPDATE SET 
             expiry_date = excluded.expiry_date,
             name = excluded.name,
-            metadata = excluded.metadata
+            metadata = excluded.metadata,
+            enabled = excluded.enabled
         "#,
         &payload.plate,
         &payload.expiry_date,
         &payload.name,
-        &payload.metadata
+        &payload.metadata,
+        &payload.enabled
     )
     .execute(&state.db)
     .await
@@ -96,7 +98,8 @@ pub async fn get_allow_list(
             plate, 
             expiry_date AS "expiry_date: DateTime<Utc>",
             name,
-            metadata
+            metadata,
+            enabled
         FROM allow_list"#
     )
     .fetch_all(&state.db)
@@ -164,7 +167,8 @@ pub async fn export_allow_list_csv(
             plate, 
             expiry_date AS "expiry_date: DateTime<Utc>",
             name,
-            metadata
+            metadata,
+            enabled
         FROM allow_list"#
     )
     .fetch_all(&state.db)
@@ -213,7 +217,6 @@ pub async fn import_allow_list_csv(
 ) -> Result<StatusCode, AppError> {
     let mut rdr = csv::Reader::from_reader(body.as_bytes());
 
-    // Using a transaction to ensure atomic bulk uploads
     let mut tx = state
         .db
         .begin()
@@ -224,21 +227,22 @@ pub async fn import_allow_list_csv(
         let mut record =
             result.map_err(|e| AppError::bad_request(format!("Invalid CSV format: {}", e)))?;
 
-        // Sanitize and validate plate inside CSV. Will fail and rollback the transaction if any are invalid.
         record.plate = validate_and_sanitize_plate(&record.plate)?;
 
         sqlx::query!(
-            r#"INSERT INTO allow_list (plate, expiry_date, name, metadata)
-            VALUES (?, ?, ?, ?)
+            r#"INSERT INTO allow_list (plate, expiry_date, name, metadata, enabled)
+            VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(plate)
             DO UPDATE SET 
                 expiry_date = excluded.expiry_date,
                 name = excluded.name,
-                metadata = excluded.metadata"#,
+                metadata = excluded.metadata,
+                enabled = excluded.enabled"#,
             record.plate,
             record.expiry_date,
             record.name,
-            record.metadata
+            record.metadata,
+            record.enabled
         )
         .execute(&mut *tx)
         .await
