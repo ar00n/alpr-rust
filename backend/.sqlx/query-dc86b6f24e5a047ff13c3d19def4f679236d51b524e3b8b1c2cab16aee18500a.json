@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n        SELECT 1 FROM allow_list \n        WHERE plate = ? AND (expiry_date IS NULL OR expiry_date > CURRENT_TIMESTAMP)\n        ",
+  "query": "\n        SELECT 1 FROM allow_list \n        WHERE plate = ?\n            AND enabled = 1\n            AND (expiry_date IS NULL OR expiry_date > CURRENT_TIMESTAMP)\n        ",
   "describe": {
     "columns": [
       {
@@ -17,5 +17,5 @@
       false
     ]
   },
-  "hash": "c41e9f7faa3c84b2d86bde1cff9c7bcc9c3486dac6c8a000fba30f4be45fe9cf"
+  "hash": "dc86b6f24e5a047ff13c3d19def4f679236d51b524e3b8b1c2cab16aee18500a"
 }

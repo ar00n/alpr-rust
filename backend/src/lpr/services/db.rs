@@ -54,7 +54,9 @@ pub async fn check_whitelist(plate: &str, db: &Pool<Sqlite>) -> bool {
     let result = sqlx::query_scalar!(
         r#"
         SELECT 1 FROM allow_list 
-        WHERE plate = ? AND (expiry_date IS NULL OR expiry_date > CURRENT_TIMESTAMP)
+        WHERE plate = ?
+            AND enabled = 1
+            AND (expiry_date IS NULL OR expiry_date > CURRENT_TIMESTAMP)
         "#,
         plate
     )
