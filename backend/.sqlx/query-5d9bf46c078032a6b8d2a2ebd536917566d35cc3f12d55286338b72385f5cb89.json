@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT \n            plate, \n            expiry_date AS \"expiry_date: DateTime<Utc>\",\n            name,\n            metadata\n        FROM allow_list",
+  "query": "SELECT \n            plate, \n            expiry_date AS \"expiry_date: DateTime<Utc>\",\n            name,\n            metadata,\n            enabled\n        FROM allow_list",
   "describe": {
     "columns": [
       {
@@ -46,6 +46,17 @@
             "name": "metadata"
           }
         }
+      },
+      {
+        "name": "enabled",
+        "ordinal": 4,
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "allow_list",
+            "name": "enabled"
+          }
+        }
       }
     ],
     "parameters": {
@@ -55,8 +66,9 @@
       false,
       true,
       true,
-      true
+      true,
+      false
     ]
   },
-  "hash": "a3d9857ddf844820d57d09d9a572770a543b309bfc51cb148823e3befd0aeadc"
+  "hash": "5d9bf46c078032a6b8d2a2ebd536917566d35cc3f12d55286338b72385f5cb89"
 }
