@@ -13,10 +13,6 @@ The inference pipeline leverages **ONNX Runtime (ort)**—with support for **CUD
 
 ---
 
-<details>
-  <summary>📸 <b>Click to view Dashboard & Snapshot Screenshots</b></summary>
-  <br>
-
   <p align="center">
     <b>Real-Time Stream Overview</b><br>
     <img src="https://github.com/ar00n/alpr-rust/blob/main/demo_pictures/live.jpg" width="800" alt="Live">
@@ -41,7 +37,6 @@ The inference pipeline leverages **ONNX Runtime (ort)**—with support for **CUD
     <b>Settings</b><br>
     <img src="https://github.com/ar00n/alpr-rust/blob/main/demo_pictures/settings.jpg" width="800" alt="Settings">
   </p>
-</details>
 
 ---
 
